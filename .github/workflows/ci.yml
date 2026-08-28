@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, prod]
+  pull_request:
+    branches: [dev, prod]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gymuser
+          POSTGRES_PASSWORD: gympass
+          POSTGRES_DB: gymtracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run test suite
+        env:
+          DATABASE_URL: postgresql+psycopg://gymuser:gympass@localhost:5432/gymtracker
+          JWT_SECRET_KEY: ci-test-secret-key
+          ADMIN_EMAIL: admin@test.local
+          ADMIN_CREATE_USER_KEY: ci-test-admin-key
+          SMTP_USERNAME: test@test.local
+          SMTP_PASSWORD: test-password
+          ENVIRONMENT: development
+        run: pytest tests/ -v
