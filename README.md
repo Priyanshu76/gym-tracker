@@ -36,7 +36,7 @@ docker compose exec api alembic upgrade head
 - [x] Phase 2c — Signup and Reset Password pages migrated to Jinja2 (`/signup`, `/reset-password`), full loop verified end-to-end including real error-shape handling
 - [x] Phase 3 — Progress_Dashboard + Workout_Logs pages migrated to Jinja2 (`/dashboard`, `/logs`)
 - [x] Phase 4 — Google Sheets -> Postgres migration script (migrations_data/migrate_from_sheets.py), transformation logic fully tested; live Sheets API call untested (no network path from here to Google's API)
-- [ ] Phase 5 — GitHub Actions CD (auto-deploy prod on merge), new OCI instance deployment
+- [x] Phase 5 — CD workflow + production compose file ready; actual OCI server setup requires manual action (see DEPLOYMENT.md) since I have no access to that server
 
 ## Notes on what changed vs. the n8n version
 
