@@ -18,9 +18,11 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Routers get included here as each migration phase lands.
-from app.routers import auth, admin
+from app.routers import auth, admin, workouts, exercises
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(workouts.router)
+app.include_router(exercises.router)
 
 
 @app.get("/api/health")

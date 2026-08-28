@@ -41,6 +41,21 @@ def _now():
     return datetime.now(timezone.utc)
 
 
+@router.get("/me")
+def get_me(user: User = Depends(get_current_user)):
+    """
+    Lets the frontend check "am I logged in, and as whom" purely by asking
+    the server — no token to store or manage client-side at all, since the
+    httpOnly cookie is sent automatically by the browser. A 401 here just
+    means "show the login screen."
+    """
+    return {
+        "username": user.username,
+        "display_name": user.display_name,
+        "must_reset_password": user.must_reset_password,
+    }
+
+
 # ============================================================
 # Signup
 # ============================================================
