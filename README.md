@@ -34,7 +34,7 @@ docker compose exec api alembic upgrade head
 - [x] Phase 2a — workout-logs and custom-exercises endpoints
 - [x] Phase 2b — Weekly_Lift_Log page migrated to Jinja2, served at `/`, cookie-based auth (no client-side token at all)
 - [x] Phase 2c — Signup and Reset Password pages migrated to Jinja2 (`/signup`, `/reset-password`), full loop verified end-to-end including real error-shape handling
-- [ ] Phase 3 — migrate Progress_Dashboard + Workout_Logs pages
+- [x] Phase 3 — Progress_Dashboard + Workout_Logs pages migrated to Jinja2 (`/dashboard`, `/logs`)
 - [ ] Phase 4 — one-off script to migrate existing Google Sheets data into Postgres
 - [ ] Phase 5 — GitHub Actions CD (auto-deploy prod on merge), new OCI instance deployment
 

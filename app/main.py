@@ -43,6 +43,16 @@ def reset_password_page(request: Request):
     return templates.TemplateResponse(request, "reset_password.html")
 
 
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_page(request: Request):
+    return templates.TemplateResponse(request, "progress_dashboard.html")
+
+
+@app.get("/logs", response_class=HTMLResponse)
+def logs_page(request: Request):
+    return templates.TemplateResponse(request, "workout_logs.html")
+
+
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)):
     """Verifies the app is up AND can reach Postgres — not just that the process is alive."""
