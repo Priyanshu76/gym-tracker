@@ -32,5 +32,13 @@ services:
       - ./app:/app/app  # live-reload friendly for local dev
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  adminer:
+    image: adminer:4
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
 volumes:
   pgdata:
