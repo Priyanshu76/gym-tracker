@@ -1,0 +1,31 @@
+name: CD - Deploy to Production
+
+# Runs only when prod actually changes (i.e. after you merge dev -> prod).
+# Requires these repository secrets to be set before this can do anything:
+#   OCI_HOST        — the new OCI instance's IP or hostname
+#   OCI_SSH_USER     — the SSH user to deploy as
+#   OCI_SSH_KEY      — private key with access to that user (add the matching
+#                      public key to ~/.ssh/authorized_keys on the server)
+#   OCI_DEPLOY_PATH  — absolute path to the repo checkout on the server,
+#                      e.g. /home/ubuntu/gym-tracker
+on:
+  push:
+    branches: [prod]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_SSH_USER }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.OCI_DEPLOY_PATH }}
+            git fetch origin prod
+            git reset --hard origin/prod
+            docker compose -f docker-compose.prod.yml up -d --build
+            docker image prune -f
