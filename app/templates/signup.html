@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign Up — Gym Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #17181a; --surface: #1f2022; --surface-2: #26282a; --line: #35373a;
+    --chalk: #f2efe7; --steel: #9aa0a6; --yellow: #e8b23c; --rust: #b0472f; --green: #6f9c6a;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased;
+        min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .box{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:32px 28px; max-width:380px; width:100%; }
+  .eyebrow{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--steel); margin:0 0 4px; }
+  h1{ font-family:'Oswald', sans-serif; font-weight:700; text-transform:uppercase; font-size:24px; margin:0 0 6px; }
+  .sub{ font-size:13.5px; color:var(--steel); margin:0 0 22px; line-height:1.5; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; font-family:'JetBrains Mono', monospace; }
+  .field input{ width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:14px; padding:10px 12px; }
+  .field input:focus{ outline:none; border-color:var(--yellow); }
+  .field small{ display:block; color:var(--steel); font-size:11px; margin-top:5px; }
+  /* honeypot field — visually and structurally hidden from real users, but present in the DOM for bots that fill every field */
+  .hp-field{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+  .submit-btn{
+    width:100%; margin-top:6px; padding:12px; border:none; border-radius:6px; background:var(--yellow); color:#1a1a1a;
+    font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
+  }
+  .submit-btn:disabled{ background:var(--line); color:var(--steel); cursor:default; }
+  .msg{ font-size:13px; margin-top:14px; text-align:center; min-height:16px; }
+  .msg.err{ color:var(--rust); }
+  .msg.ok{ color:var(--green); }
+  .back-link{ display:block; text-align:center; margin-top:18px; font-size:12px; color:var(--steel); text-decoration:none; }
+  .back-link:hover{ color:var(--yellow); }
+  .success-box{ text-align:center; }
+  .success-box .icon{ font-size:36px; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<div class="box" id="box">
+  <p class="eyebrow">Gym Tracker</p>
+  <h1>Request access</h1>
+  <p class="sub">Accounts require approval from the site owner. You'll verify your email first, then get a notification once it's reviewed.</p>
+
+  <form id="signup-form">
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required minlength="3" maxlength="30" autocomplete="username">
+      <small>3–30 characters: letters, numbers, . _ -</small>
+    </div>
+    <div class="field">
+      <label for="displayName">Display name</label>
+      <input type="text" id="displayName" name="displayName" required maxlength="60" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autocomplete="email">
+    </div>
+    <!-- Honeypot: real visitors never see or fill this. Bots that auto-fill every form field usually do. -->
+    <div class="hp-field" aria-hidden="true">
+      <label for="website_url">Website</label>
+      <input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off">
+    </div>
+    <button type="submit" class="submit-btn" id="submit-btn">Request access</button>
+    <div class="msg" id="msg"></div>
+  </form>
+
+  <a class="back-link" href="/">← Back to login</a>
+</div>
+
+<script>
+// Same origin as the rest of the app — relative paths, no BASE_URL, no API key.
+
+// FastAPI's error shapes differ depending on what failed: a manually-raised
+// HTTPException gives detail as a plain string, but Pydantic's own automatic
+// 422 validation errors give detail as an array of {msg, loc, ...} objects.
+// Handle both so a bad email format doesn't render as "[object Object]".
+function extractErrorMessage(data, fallback){
+  if(!data) return fallback;
+  if(typeof data.detail === 'string') return data.detail;
+  if(Array.isArray(data.detail) && data.detail.length) return data.detail.map(d => d.msg).join(' ');
+  if(data.error) return data.error;
+  return fallback;
+}
+
+const form = document.getElementById('signup-form');
+const msgEl = document.getElementById('msg');
+const btn = document.getElementById('submit-btn');
+const box = document.getElementById('box');
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  msgEl.textContent = '';
+  msgEl.className = 'msg';
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const payload = {
+    username: document.getElementById('username').value.trim(),
+    display_name: document.getElementById('displayName').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    website_url: document.getElementById('website_url').value // honeypot; stays empty for real users
+  };
+
+  try{
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.success){
+      msgEl.textContent = extractErrorMessage(data, 'Something went wrong. Please try again.');
+      msgEl.className = 'msg err';
+      btn.disabled = false;
+      btn.textContent = 'Request access';
+      return;
+    }
+    box.innerHTML = `
+      <div class="success-box">
+        <div class="icon">✓</div>
+        <h1>Check your email</h1>
+        <p class="sub">${data.message}</p>
+        <a class="back-link" href="/">← Back to login</a>
+      </div>
+    `;
+  }catch(err){
+    msgEl.textContent = 'Could not reach the server — check your connection.';
+    msgEl.className = 'msg err';
+    btn.disabled = false;
+    btn.textContent = 'Request access';
+  }
+});
+</script>
+</body>
+</html>

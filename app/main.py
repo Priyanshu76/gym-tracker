@@ -33,6 +33,16 @@ def weekly_lift_log_page(request: Request):
     return templates.TemplateResponse(request, "weekly_lift_log.html")
 
 
+@app.get("/signup", response_class=HTMLResponse)
+def signup_page(request: Request):
+    return templates.TemplateResponse(request, "signup.html")
+
+
+@app.get("/reset-password", response_class=HTMLResponse)
+def reset_password_page(request: Request):
+    return templates.TemplateResponse(request, "reset_password.html")
+
+
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)):
     """Verifies the app is up AND can reach Postgres — not just that the process is alive."""
