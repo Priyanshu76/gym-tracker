@@ -30,11 +30,11 @@ docker compose exec api alembic upgrade head
 ## Migration roadmap (from the old n8n workflow)
 
 - [x] Phase 0 — repo scaffold, Docker Compose, DB models, Alembic, health check
-- [ ] Phase 1 — auth: signup, login (JWT httpOnly cookie), email verify, admin approve/reject, forgot/reset password, forced reset
+- [x] Phase 1 — auth: signup, login (JWT httpOnly cookie), email verify, admin approve/reject, forgot/reset password, forced reset
 - [ ] Phase 2 — core workout endpoints: log-set, get-progress; migrate Weekly_Lift_Log page to Jinja2
 - [ ] Phase 3 — custom exercises endpoints; migrate Progress_Dashboard + Workout_Logs pages
 - [ ] Phase 4 — one-off script to migrate existing Google Sheets data into Postgres
-- [ ] Phase 5 — GitHub Actions CI/CD, new OCI instance deployment
+- [ ] Phase 5 — GitHub Actions CD (auto-deploy prod on merge), new OCI instance deployment
 
 ## Notes on what changed vs. the n8n version
 
