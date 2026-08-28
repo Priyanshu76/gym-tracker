@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Weekly Lift Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #17181a;
+    --surface: #1f2022;
+    --surface-2: #26282a;
+    --line: #35373a;
+    --chalk: #f2efe7;
+    --steel: #9aa0a6;
+    --yellow: #e8b23c;
+    --rust: #b0472f;
+    --green: #6f9c6a;
+    --blue: #6a94b0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--chalk);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--yellow); color:#1a1a1a; }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:20px 16px 90px; }
+
+  header{ margin-bottom:18px; }
+  .header-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .nav-link{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--steel); text-decoration:none; border:1px solid var(--line); border-radius:20px;
+    padding:6px 12px; transition:border-color .15s, color .15s; flex:none; white-space:nowrap;
+  }
+  .nav-link:hover{ border-color:var(--yellow); color:var(--yellow); }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--steel);
+    margin:0 0 4px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  h1{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    font-size:28px;
+    margin:0;
+  }
+  .conn-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--steel);
+    display:inline-block;
+    margin-right:5px;
+  }
+  .conn-dot.ok{ background:var(--green); }
+  .conn-dot.bad{ background:var(--rust); }
+
+  .rack{ display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; margin:20px 0 22px; }
+  .day-tab{
+    background:var(--surface); border:1px solid var(--line); border-radius:4px;
+    padding:8px 4px 10px; text-align:center; cursor:pointer; color:var(--steel);
+    transition:border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .day-tab:hover{ border-color:#4a4d51; transform:translateY(-1px); }
+  .day-tab.active{ background:var(--surface-2); border-color:var(--yellow); color:var(--chalk); }
+  .day-tab .d{ font-family:'Oswald', sans-serif; font-size:12px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .plates{ display:flex; justify-content:center; gap:2px; margin-top:6px; height:14px; align-items:flex-end; }
+  .plate{ width:4px; background:var(--steel); border-radius:1px; }
+  .day-tab.active .plate{ background:var(--yellow); }
+  .day-tab.rest .plate{ background:var(--line); }
+
+  .panel-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--line); }
+  .panel-head h2{ font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:20px; margin:0; font-weight:600; }
+  .panel-head .sub{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--steel); }
+
+  .rest-card{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:32px 20px; text-align:center; color:var(--steel); }
+  .rest-card .big{ font-family:'Oswald', sans-serif; font-size:22px; color:var(--chalk); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+
+  /* ---- Aux section (Warmup / Stretch) ---- */
+  .aux-section{ margin-bottom:22px; }
+  .aux-section-title{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--blue); margin-bottom:8px; display:flex; align-items:center; gap:8px;
+  }
+  .aux-section-title::before, .aux-section-title::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .aux-card .ex-name{ color:var(--chalk); }
+  .aux-card.done{ border-color:var(--blue); }
+  .aux-card.done .badge{ background:var(--blue); border-color:var(--blue); color:#12140f; }
+
+  .ex-card{ background:var(--surface); border:1px solid var(--line); border-radius:8px; margin-bottom:8px; overflow:hidden; }
+  .ex-card.done{ border-color:var(--green); }
+  .ex-main{ display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; }
+  .badge{
+    width:22px; height:22px; border-radius:50%; border:2px solid var(--steel); flex:none;
+    display:flex;align-items:center;justify-content:center; font-size:11px; color:var(--steel);
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .ex-card.done .badge{ background:var(--green); border-color:var(--green); color:#12140f; }
+
+  .ex-info{ flex:1; min-width:0; }
+  .ex-name{ font-weight:600; font-size:15px; color:var(--chalk); }
+  .ex-target{ font-size:12px; color:var(--steel); margin-top:2px; }
+  .ex-slot-note{ font-size:11px; color:var(--blue); margin-top:2px; font-family:'JetBrains Mono', monospace; }
+  .ex-nums{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--yellow); text-align:right; white-space:nowrap; flex:none; }
+  .ex-nums .lbl{ display:block; font-size:9px; color:var(--steel); letter-spacing:.08em; text-transform:uppercase; }
+  .chev{ color:var(--steel); flex:none; transition:transform .15s ease; font-size:12px; }
+  .ex-card.open .chev{ transform:rotate(180deg); }
+
+  .ex-body{ max-height:0; overflow:hidden; transition:max-height .25s ease; border-top:1px solid transparent; }
+  .ex-card.open .ex-body{ max-height:720px; border-top-color:var(--line); }
+  .ex-body-inner{ padding:14px; }
+
+  .alt-lbl, .log-lbl{ font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--steel); margin-bottom:8px; }
+
+  /* ---- Swap chips (feature 1 + 3) ---- */
+  .alt-chips{ display:flex; flex-wrap:wrap; margin-bottom:14px; }
+  .alt-chip{
+    position:relative; display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface-2); border:1px solid var(--line); color:var(--chalk); font-size:12.5px;
+    padding:5px 10px; border-radius:20px; margin:0 6px 6px 0; cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .alt-chip:hover{ border-color:var(--yellow); }
+  .alt-chip:active{ transform:scale(.97); }
+  .alt-chip.custom{ border-color:var(--blue); }
+  .alt-chip .alt-remove{
+    color:var(--steel); font-size:13px; line-height:1; padding:0 2px; border-radius:50%;
+  }
+  .alt-chip .alt-remove:hover{ color:var(--rust); }
+  .alt-chip.add-chip{ background:transparent; border-style:dashed; color:var(--steel); }
+  .alt-chip.add-chip:hover{ color:var(--yellow); border-color:var(--yellow); }
+
+  .add-alt-form{ display:flex; gap:6px; margin:-6px 0 14px; }
+  .add-alt-form input{
+    flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
+    color:var(--chalk); font-size:13px; padding:8px 10px; min-width:0;
+  }
+  .add-alt-form input:focus{ outline:none; border-color:var(--yellow); }
+  .add-alt-form button{
+    border:none; border-radius:6px; padding:0 12px; font-family:'Oswald', sans-serif; font-size:12px;
+    text-transform:uppercase; font-weight:600; cursor:pointer; letter-spacing:.04em;
+  }
+  .add-alt-form .add-alt-confirm{ background:var(--yellow); color:#1a1a1a; }
+  .add-alt-form .add-alt-cancel{ background:var(--surface-2); color:var(--steel); border:1px solid var(--line); }
+
+  .set-rows{ margin-top:16px; }
+  .set-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .set-row .set-n{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--steel); width:96px; flex:none; }
+  .set-row input{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
+    color:var(--chalk); font-family:'JetBrains Mono', monospace; font-size:14px;
+    padding:8px 10px; width:100%; min-width:0;
+  }
+  .set-row input:focus{ outline:none; border-color:var(--yellow); }
+  .set-row .x{ color:var(--steel); font-size:12px; flex:none; }
+  .set-row.logged input{ border-color:var(--green); color:var(--green); }
+
+  .log-btn{
+    width:100%; margin-top:6px; padding:11px; border:none; border-radius:6px;
+    background:var(--yellow); color:#1a1a1a; font-family:'Oswald', sans-serif;
+    font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em;
+    cursor:pointer;
+  }
+  .log-btn:disabled{ background:var(--line); color:var(--steel); cursor:not-allowed; }
+  .log-status{ font-size:12px; margin-top:8px; text-align:center; min-height:16px; color:var(--steel); }
+  .log-status.ok{ color:var(--green); }
+  .log-status.err{ color:var(--rust); }
+  .log-hint{ font-size:11px; color:var(--steel); text-align:center; margin-top:6px; }
+
+  .summary-strip{ display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--steel); margin-top:16px; padding-top:12px; border-top:1px dashed var(--line); }
+  .summary-strip b{ color:var(--chalk); }
+
+  .tips-fab{
+    position:fixed; right:16px; bottom:16px; background:var(--yellow); color:#1a1a1a; border:none;
+    font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px;
+    letter-spacing:.06em; padding:12px 16px; border-radius:24px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+  .drawer-bg{ position:fixed; inset:0; background:rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:10; }
+  .drawer-bg.show{ opacity:1; pointer-events:auto; }
+  .drawer{
+    position:fixed; left:0; right:0; bottom:0; max-width:760px; margin:0 auto; background:var(--surface);
+    border-top:1px solid var(--line); border-radius:16px 16px 0 0; transform:translateY(100%);
+    transition:transform .25s ease; z-index:11; max-height:78vh; overflow-y:auto; padding:18px 18px 28px;
+  }
+  .drawer.show{ transform:translateY(0); }
+  .drawer h3{ font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:18px; margin:0 0 14px; }
+  .tip-row{ padding:10px 0; border-bottom:1px solid var(--line); }
+  .tip-row:last-child{ border-bottom:none; }
+  .tip-cat{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--yellow); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
+  .tip-rep{ font-size:13px; color:var(--steel); margin-bottom:3px; }
+  .tip-text{ font-size:14px; line-height:1.4; }
+  .drawer-close{ position:sticky; top:0; float:right; background:none; border:none; color:var(--steel); font-size:20px; cursor:pointer; line-height:1; }
+
+  /* ---- Confirm modal (undo/remove) ---- */
+  .confirm-bg{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:20; padding:20px; }
+  .confirm-bg.show{ display:flex; }
+  .confirm-box{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px; max-width:340px; width:100%; }
+  .confirm-box p{ font-size:14px; line-height:1.5; margin:0 0 16px; }
+  .confirm-actions{ display:flex; gap:8px; }
+  .confirm-actions button{ flex:1; padding:10px; border-radius:6px; border:none; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer; }
+  .confirm-actions .yes{ background:var(--rust); color:#fff; }
+  .confirm-actions .no{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
+
+  /* ---- Login overlay ---- */
+  .auth-overlay{ position:fixed; inset:0; background:var(--bg); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .auth-overlay.show{ display:flex; }
+  .auth-box{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:28px 24px; max-width:340px; width:100%; }
+  .auth-box h2{ font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:20px; margin:0 0 4px; }
+  .auth-box .sub{ font-size:13px; color:var(--steel); margin:0 0 20px; }
+  .auth-field{ margin-bottom:14px; }
+  .auth-field label{ display:block; font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; font-family:'JetBrains Mono', monospace; }
+  .auth-field input{
+    width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
+    color:var(--chalk); font-size:14px; padding:10px 12px;
+  }
+  .auth-field input:focus{ outline:none; border-color:var(--yellow); }
+  .auth-submit{
+    width:100%; margin-top:6px; padding:11px; border:none; border-radius:6px;
+    background:var(--yellow); color:#1a1a1a; font-family:'Oswald', sans-serif;
+    font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
+  }
+  .auth-submit:disabled{ background:var(--line); color:var(--steel); cursor:default; }
+  .auth-error{ color:var(--rust); font-size:12.5px; margin-top:10px; min-height:16px; text-align:center; }
+  .auth-links{ text-align:center; margin-top:14px; font-size:12px; }
+  .auth-links a{ color:var(--steel); text-decoration:none; }
+  .auth-links a:hover{ color:var(--yellow); }
+  .auth-links .sep{ color:var(--line); margin:0 6px; }
+
+  .user-badge{ display:flex; align-items:center; gap:8px; }
+  .user-badge .who{ font-size:11px; color:var(--steel); font-family:'JetBrains Mono', monospace; }
+  .logout-btn{
+    background:none; border:1px solid var(--line); color:var(--steel); font-size:11px; font-family:'JetBrains Mono', monospace;
+    padding:5px 10px; border-radius:14px; cursor:pointer; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .logout-btn:hover{ border-color:var(--rust); color:var(--rust); }
+
+  @media (max-width:480px){
+    .rack{ gap:4px; }
+    .day-tab{ padding:6px 2px 8px; }
+    .day-tab .d{ font-size:10px; }
+    h1{ font-size:22px; }
+    .set-row .set-n{ width:76px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">
+      <span id="today-date">—</span>
+      <span class="user-badge"><span class="conn-dot" id="conn-dot"></span><span id="conn-text">checking…</span><span class="who" id="user-who"></span><button class="logout-btn" id="logout-btn" style="display:none;">Log out</button></span>
+    </p>
+    <div class="header-top">
+      <h1>Weekly Lift Log</h1>
+      <a class="nav-link" href="/dashboard">Dashboard →</a>
+    </div>
+  </header>
+
+  <div class="rack" id="rack"></div>
+
+  <div class="panel-head">
+    <h2 id="panel-title">—</h2>
+    <span class="sub" id="panel-sub">—</span>
+  </div>
+
+  <div id="content"></div>
+
+  <div class="summary-strip" id="summary-strip"></div>
+</div>
+
+<button class="tips-fab" id="tips-open">Tips ↑</button>
+<div class="drawer-bg" id="drawer-bg"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawer-close">×</button>
+  <h3>Guidelines</h3>
+  <div id="tips-list"></div>
+</div>
+
+<div class="confirm-bg" id="confirm-bg">
+  <div class="confirm-box">
+    <p id="confirm-text">Are you sure?</p>
+    <div class="confirm-actions">
+      <button class="no" id="confirm-no">Cancel</button>
+      <button class="yes" id="confirm-yes">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-box">
+    <h2>Log in</h2>
+    <p class="sub">Accounts are invite-only — ask the site owner for a login.</p>
+    <form id="auth-form">
+      <div class="auth-field">
+        <label for="auth-username">Username</label>
+        <input type="text" id="auth-username" autocomplete="username" required>
+      </div>
+      <div class="auth-field">
+        <label for="auth-password">Password</label>
+        <input type="password" id="auth-password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="auth-submit" id="auth-submit">Log in</button>
+      <div class="auth-error" id="auth-error"></div>
+    </form>
+    <div class="auth-links"><a href="/signup">Sign up</a><span class="sep">·</span><a href="/reset-password">Forgot password?</a></div>
+  </div>
+</div>
+
+<div class="auth-overlay" id="force-reset-overlay">
+  <div class="auth-box">
+    <h2>Set a new password</h2>
+    <p class="sub">This is a temporary password — choose one only you know before continuing.</p>
+    <form id="force-reset-form">
+      <div class="auth-field">
+        <label for="force-reset-password">New password</label>
+        <input type="password" id="force-reset-password" autocomplete="new-password" required minlength="8">
+      </div>
+      <div class="auth-field">
+        <label for="force-reset-confirm">Confirm new password</label>
+        <input type="password" id="force-reset-confirm" autocomplete="new-password" required minlength="8">
+      </div>
+      <button type="submit" class="auth-submit" id="force-reset-submit">Set password</button>
+      <div class="auth-error" id="force-reset-error"></div>
+    </form>
+  </div>
+</div>
+
+
+<script>
+// This page is now served by the FastAPI app itself, so API calls use
+// relative paths (same origin) — no BASE_URL, no API key, ever.
+
+const DATA = [
+  { key:'mon', name:'Monday', groups:'Legs', rest:false, exercises:[
+    {n:'Barbell Back Squat', t:'Quads + Glutes', sets:3, reps:'6–10', alts:['Hack Squat','Smith Machine Squat','Bulgarian Split Squat']},
+    {n:'Romanian Deadlift', t:'Hamstrings + Glutes', sets:3, reps:'8–12', alts:['Seated Leg Curl','Lying Leg Curl']},
+    {n:'Leg Press', t:'Quads + Glutes', sets:3, reps:'8–12', alts:['Hack Squat','Bulgarian Split Squat']},
+    {n:'Leg Curl', t:'Hamstrings', sets:3, reps:'10–15', alts:['Seated Leg Curl','Lying Leg Curl']},
+    {n:'Leg Extension', t:'Quadriceps', sets:3, reps:'10–15', alts:['Hack Squat','Bulgarian Split Squat']},
+    {n:'Standing Calf Raise', t:'Gastrocnemius / Calves', sets:3, reps:'10–20', alts:['Seated Calf Raise']},
+  ]},
+  { key:'tue', name:'Tuesday', groups:'Shoulders + Abs', rest:false, exercises:[
+    {n:'Seated Dumbbell Shoulder Press', t:'Front + Lateral Delts', sets:3, reps:'6–10', alts:['Barbell Overhead Press','Machine Shoulder Press','Arnold Press']},
+    {n:'Dumbbell Lateral Raise', t:'Lateral Delts', sets:3, reps:'10–15', alts:['Cable Lateral Raise','Machine Lateral Raise']},
+    {n:'Reverse Pec Deck', t:'Rear Delts', sets:3, reps:'10–15', alts:['Cable Rear-Delt Fly','Bent-Over Reverse Fly']},
+    {n:'Cable Face Pull', t:'Rear Delts + Upper Back', sets:3, reps:'10–15', alts:['Cable Rear-Delt Row','High Cable Row']},
+    {n:"Hanging Leg Raise", t:'Lower Abs + Hip Flexors', sets:3, reps:'10–15', alts:["Captain's Chair Leg Raise",'Reverse Crunch','Lying Leg Raise']},
+    {n:'Cable Crunch', t:'Rectus Abdominis', sets:3, reps:'10–15', alts:['Weighted Crunch','Decline Crunch']},
+  ]},
+  { key:'wed', name:'Wednesday', groups:'Chest + Back', rest:false, exercises:[
+    {n:'Barbell Bench Press', t:'Overall Chest', sets:3, reps:'6–10', alts:['Dumbbell Bench Press','Machine Chest Press']},
+    {n:'Incline Dumbbell Press', t:'Upper Chest', sets:3, reps:'8–12', alts:['Incline Barbell Press','Incline Machine Press']},
+    {n:'Cable Fly', t:'Chest Isolation', sets:3, reps:'10–15', alts:['Pec Deck','Dumbbell Fly']},
+    {n:'Pull-Ups / Lat Pulldown', t:'Lats', sets:3, reps:'6–12', alts:['Neutral-Grip Pulldown','Close-Grip Pulldown']},
+    {n:'Barbell Row', t:'Mid-Back + Lats', sets:3, reps:'6–10', alts:['T-Bar Row','Chest-Supported Row']},
+    {n:'Seated Cable Row', t:'Rhomboids + Mid-Back', sets:3, reps:'8–12', alts:['Machine Row','Single-Arm Cable Row']},
+  ]},
+  { key:'thu', name:'Thursday', groups:'Biceps + Triceps + Abs', rest:false, exercises:[
+    {n:'Barbell Curl', t:'Overall Biceps', sets:3, reps:'8–12', alts:['EZ-Bar Curl','Machine Curl']},
+    {n:'Incline Dumbbell Curl', t:'Biceps Long Head', sets:3, reps:'8–12', alts:['Bayesian Cable Curl','Drag Curl']},
+    {n:'Hammer Curl', t:'Brachialis + Brachioradialis', sets:3, reps:'8–12', alts:['Cross-Body Hammer Curl','Reverse Curl']},
+    {n:'Close-Grip Bench Press', t:'Overall Triceps', sets:3, reps:'6–10', alts:['Assisted/Weighted Dips']},
+    {n:'Overhead Cable Extension', t:'Triceps Long Head', sets:3, reps:'10–15', alts:['Overhead Dumbbell Extension','EZ-Bar Skull Crushers']},
+    {n:'Rope Pushdown', t:'Lateral + Medial Heads', sets:3, reps:'10–15', alts:['Straight-Bar Pushdown','Single-Arm Cable Pushdown']},
+    {n:'Ab Wheel Rollout', t:'Core + Anti-Extension', sets:3, reps:'8–15', alts:['Bodyweight Rollout','Stability Ball Rollout']},
+    {n:'Hanging Knee Raise', t:'Lower Abs + Core', sets:3, reps:'10–15', alts:['Reverse Crunch',"Captain's Chair Knee Raise"]},
+  ]},
+  { key:'fri', name:'Friday', groups:'Chest + Biceps', rest:false, exercises:[
+    {n:'Incline Barbell Press', t:'Upper Chest', sets:3, reps:'6–10', alts:['Incline Machine Press','Incline Dumbbell Press']},
+    {n:'Dumbbell Flat Press', t:'Overall Chest', sets:3, reps:'8–12', alts:['Machine Chest Press','Barbell Bench Press']},
+    {n:'Pec Deck Fly', t:'Chest Isolation', sets:3, reps:'10–15', alts:['Cable Fly','Dumbbell Fly']},
+    {n:'EZ-Bar Curl', t:'Overall Biceps', sets:3, reps:'8–12', alts:['Barbell Curl','Machine Curl']},
+    {n:'Preacher Curl', t:'Biceps', sets:3, reps:'8–12', alts:['Machine Preacher Curl','Cable Curl']},
+    {n:'Cable Hammer Curl', t:'Brachialis + Brachioradialis', sets:3, reps:'10–15', alts:['Hammer Curl','Cross-Body Hammer Curl']},
+  ]},
+  { key:'sat', name:'Saturday', groups:'Back + Triceps', rest:false, exercises:[
+    {n:'Neutral-Grip Lat Pulldown', t:'Lats', sets:3, reps:'8–12', alts:['Pull-Ups','Close-Grip Pulldown']},
+    {n:'Chest-Supported Row', t:'Mid-Back', sets:3, reps:'8–12', alts:['T-Bar Row','Machine Row']},
+    {n:'Single-Arm Dumbbell Row', t:'Lats + Mid-Back', sets:3, reps:'8–12', alts:['Single-Arm Cable Row','Machine Row']},
+    {n:'EZ-Bar Skull Crusher', t:'Triceps Long Head', sets:3, reps:'8–12', alts:['Dumbbell Skull Crusher','Overhead Cable Extension']},
+    {n:'Cable Pushdown', t:'Lateral + Medial Heads', sets:3, reps:'10–15', alts:['Rope Pushdown','Straight-Bar Pushdown','Reverse-Grip Pushdown']},
+    {n:'Assisted/Weighted Dips', t:'Overall Triceps', sets:3, reps:'8–12', alts:['Close-Grip Bench Press','Machine Dip']},
+  ]},
+  { key:'sun', name:'Sunday', groups:'Rest', rest:true, exercises:[] },
+];
+
+// ---- Warmup & Stretch/Finishing definitions (feature 4 & 5) ----
+// Each field: key (sent to server as Field*_Label/Value), label, unit
+const WARMUP_EXERCISES = [
+  {n:'Treadmill', fields:[
+    {key:'incline', label:'Inclination', unit:'%'},
+    {key:'speed', label:'Speed', unit:'km/h'},
+    {key:'minutes', label:'Minutes', unit:'min'},
+  ]},
+  {n:'Forward Hang', fields:[
+    {key:'duration', label:'Duration', unit:'sec'},
+    {key:'sets', label:'Sets', unit:''},
+  ]},
+  {n:'Squats', fields:[
+    {key:'weight', label:'Weight', unit:'kg'},
+    {key:'reps', label:'Reps', unit:''},
+  ]},
+  {n:'Stair Climbing', fields:[
+    {key:'minutes', label:'Minutes', unit:'min'},
+    {key:'floors', label:'Floors', unit:''},
+  ]},
+  {n:'Cycling', fields:[
+    {key:'minutes', label:'Minutes', unit:'min'},
+    {key:'resistance', label:'Resistance', unit:'lvl'},
+    {key:'speed', label:'Speed', unit:'km/h'},
+  ]},
+];
+
+const STRETCH_EXERCISES = [
+  {n:'Plank', fields:[
+    {key:'duration', label:'Duration', unit:'sec'},
+    {key:'sets', label:'Sets', unit:''},
+  ]},
+  {n:'Pushups', fields:[
+    {key:'reps', label:'Reps', unit:''},
+    {key:'sets', label:'Sets', unit:''},
+  ]},
+  {n:'Pullups', fields:[
+    {key:'reps', label:'Reps', unit:''},
+    {key:'sets', label:'Sets', unit:''},
+  ]},
+  {n:'Dead hang', fields:[
+    {key:'duration', label:'Duration', unit:'sec'},
+    {key:'sets', label:'Sets', unit:''},
+  ]},
+  {n:'Treadmill', fields:[
+    {key:'incline', label:'Inclination', unit:'%'},
+    {key:'speed', label:'Speed', unit:'km/h'},
+    {key:'minutes', label:'Minutes', unit:'min'},
+  ]},
+  {n:'Half Squat', fields:[
+    {key:'weight', label:'Weight', unit:'kg'},
+    {key:'reps', label:'Reps', unit:''},
+  ]},
+];
+
+const TIPS = [
+  {cat:'Compound exercises', rep:'6–10 or 8–12 reps', text:'Keep about 1–3 reps in reserve (RIR).'},
+  {cat:'Isolation exercises', rep:'10–15 reps', text:'Keep about 0–2 RIR; occasional failure is acceptable on the final set.'},
+  {cat:'Calves', rep:'10–20 reps', text:'Use controlled range of motion.'},
+  {cat:'Abs', rep:'8–20 reps', text:'Prioritize controlled reps rather than momentum.'},
+  {cat:'Progression', rep:'', text:'Keep primary exercises stable for 6–8 weeks and progressively add reps/weight.'},
+  {cat:'Recovery', rep:'', text:'Sunday is the primary rest day; monitor fatigue because arms receive substantial direct and indirect volume.'},
+];
+
+// normalize every exercise's alts array from plain strings into objects: {name, custom:false, id:null}
+// also freeze the original "slot" name — this is what gets logged as Exercise in the sheet,
+// regardless of which alternative is currently swapped in, so progress history for a given
+// slot (e.g. "Barbell Back Squat") never fragments across substitutions.
+DATA.forEach(day=>{
+  day.exercises.forEach(ex=>{
+    ex.alts = ex.alts.map(a => (typeof a === 'string') ? {name:a, custom:false, id:null} : a);
+    ex.slot = ex.n; // immutable original slot name
+  });
+});
+
+const rackEl = document.getElementById('rack');
+const contentEl = document.getElementById('content');
+const panelTitle = document.getElementById('panel-title');
+const panelSub = document.getElementById('panel-sub');
+const summaryStrip = document.getElementById('summary-strip');
+const tipsList = document.getElementById('tips-list');
+
+const JS_DAY_TO_KEY = ['sun','mon','tue','wed','thu','fri','sat'];
+const todayKey = JS_DAY_TO_KEY[new Date().getDay()];
+const todayISO = new Date().toISOString().slice(0,10);
+let activeDay = todayKey;
+
+document.getElementById('today-date').textContent =
+  new Date().toLocaleDateString(undefined, { weekday:'long', month:'short', day:'numeric' });
+
+// ==================================================================
+// AUTH — login screen, cookie-based session (no client-side token at all)
+// ==================================================================
+// The httpOnly cookie set by /api/login is sent automatically by the browser
+// on every same-origin request — there's nothing to store, retrieve, or
+// attach manually the way the old ?token= query param required.
+let CURRENT_USER = null; // {username, display_name, must_reset_password}, set once at boot
+
+async function checkMe(){
+  try{
+    const res = await fetch('/api/me');
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
+}
+
+function ensureAuthed(){
+  return new Promise(resolve=>{
+    checkMe().then(me=>{
+      if(me){ resolve(me); return; }
+      showLoginOverlay(resolve);
+    });
+  });
+}
+
+function showForceResetOverlay(me, onSuccess){
+  document.getElementById('auth-overlay').classList.remove('show');
+  const overlay = document.getElementById('force-reset-overlay');
+  const form = document.getElementById('force-reset-form');
+  const errEl = document.getElementById('force-reset-error');
+  const submitBtn = document.getElementById('force-reset-submit');
+  overlay.classList.add('show');
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    errEl.textContent = '';
+    const newPassword = document.getElementById('force-reset-password').value;
+    const confirmPassword = document.getElementById('force-reset-confirm').value;
+    if(newPassword !== confirmPassword){
+      errEl.textContent = "Passwords don't match.";
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
+    try{
+      const res = await authFetch('/api/set-new-password', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ new_password: newPassword })
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || !data.success){
+        errEl.textContent = (data.detail || data.error) || 'Could not set password.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Set password';
+        return;
+      }
+      overlay.classList.remove('show');
+      form.reset();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Set password';
+      me.must_reset_password = false;
+      onSuccess(me);
+    }catch(err){
+      errEl.textContent = 'Could not reach the server — check your connection.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Set password';
+    }
+  };
+}
+
+function completeLogin(me, onSuccess){
+  if(me.must_reset_password){
+    showForceResetOverlay(me, onSuccess);
+  } else {
+    document.getElementById('auth-overlay').classList.remove('show');
+    onSuccess(me);
+  }
+}
+
+function showLoginOverlay(onSuccess){
+  const overlay = document.getElementById('auth-overlay');
+  const form = document.getElementById('auth-form');
+  const errEl = document.getElementById('auth-error');
+  const submitBtn = document.getElementById('auth-submit');
+  overlay.classList.add('show');
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    errEl.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Logging in…';
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    try{
+      const res = await fetch('/api/login', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || !data.success){
+        errEl.textContent = (data.detail || data.error) || 'Login failed — check your username and password.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log in';
+        return;
+      }
+      // The cookie is already set by the browser at this point — fetch
+      // canonical identity from /api/me rather than trusting this response shape.
+      const me = await checkMe();
+      form.reset();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log in';
+      completeLogin(me, onSuccess);
+    }catch(err){
+      errEl.textContent = 'Could not reach the server — check your connection.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log in';
+    }
+  };
+}
+
+// On 401 (expired/invalid session) this clears nothing client-side — there's
+// nothing to clear — it just re-prompts login and retries once automatically.
+async function authFetch(path, opts={}){
+  const res = await fetch(path, opts);
+  if(res.status === 401){
+    await ensureAuthed();
+    return authFetch(path, opts);
+  }
+  return res;
+}
+
+document.getElementById('logout-btn').addEventListener('click', async ()=>{
+  try{ await fetch('/api/logout', { method:'POST' }); }catch(e){}
+  location.reload();
+});
+
+function totalSets(day){ return day.exercises.reduce((s,e)=>s+e.sets,0); }
+
+function renderRack(){
+  rackEl.innerHTML = '';
+  DATA.forEach(day=>{
+    const btn = document.createElement('div');
+    btn.className = 'day-tab' + (day.key===activeDay?' active':'') + (day.rest?' rest':'');
+    const plateCount = day.rest ? 1 : day.exercises.length;
+    let plates = '';
+    for(let i=0;i<plateCount;i++){
+      const h = day.rest ? 4 : 6 + (i%3)*3;
+      plates += `<div class="plate" style="height:${h}px"></div>`;
+    }
+    btn.innerHTML = `<div class="d">${day.name.slice(0,3)}</div><div class="plates">${plates}</div>`;
+    btn.addEventListener('click', ()=>{ activeDay = day.key; renderRack(); renderDay(); });
+    rackEl.appendChild(btn);
+  });
+}
+
+// NOTE: this previously called window.storage.get/set, which is a Claude-Artifacts-only
+// API and doesn't exist on a plain page served from your own domain — it was silently
+// failing (caught by the try/catch below) and never actually persisting anything.
+// Using localStorage instead, scoped by user so a shared device doesn't mix accounts up.
+async function getLocalDone(exId){
+  try{
+    const uid = CURRENT_USER ? CURRENT_USER.username : 'anon';
+    const raw = localStorage.getItem(`done:${uid}:${todayISO}:${exId}`);
+    return raw ? JSON.parse(raw) : false;
+  }catch(e){ return false; }
+}
+async function setLocalDone(exId, val){
+  try{
+    const uid = CURRENT_USER ? CURRENT_USER.username : 'anon';
+    localStorage.setItem(`done:${uid}:${todayISO}:${exId}`, JSON.stringify(val));
+  }catch(e){}
+}
+
+async function logSet(payload){
+  const res = await authFetch('/api/workout-logs', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error('Request failed: ' + res.status);
+  return res.json();
+}
+
+// ---------------- Custom exercise persistence (feature 3) ----------------
+async function fetchCustomExercises(){
+  try{
+    const res = await authFetch('/api/custom-exercises');
+    if(!res.ok) return [];
+    return await res.json(); // [{id, main_exercise, custom_alt_name, created_at}]
+  }catch(e){ return []; }
+}
+async function addCustomExerciseServer(mainExercise, altName){
+  const res = await authFetch('/api/custom-exercises', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ main_exercise: mainExercise, custom_alt_name: altName })
+  });
+  if(!res.ok) throw new Error('Request failed: ' + res.status);
+  return res.json(); // {id, main_exercise, custom_alt_name, created_at}
+}
+async function removeCustomExerciseServer(id){
+  const res = await authFetch(`/api/custom-exercises/${id}`, { method:'DELETE' });
+  if(!res.ok) throw new Error('Request failed: ' + res.status);
+  return res.json();
+}
+
+// merge server-persisted custom alts into every day's matching main exercise
+function applyCustomExercises(list){
+  list.forEach(item=>{
+    DATA.forEach(day=>{
+      day.exercises.forEach(ex=>{
+        if(ex.n === item.mainExercise){
+          const already = ex.alts.some(a => a.custom && a.id === item.id);
+          if(!already){
+            ex.alts.push({ name:item.altName, custom:true, id:item.id });
+          }
+        }
+      });
+    });
+  });
+}
+
+// after a removal, strip that id from every day's alt list (and revert main if it was swapped in)
+function stripCustomExerciseEverywhere(id){
+  DATA.forEach(day=>{
+    day.exercises.forEach(ex=>{
+      ex.alts = ex.alts.filter(a => !(a.custom && a.id === id));
+    });
+  });
+}
+
+// ---------------- Confirm modal helper ----------------
+const confirmBg = document.getElementById('confirm-bg');
+const confirmText = document.getElementById('confirm-text');
+const confirmYes = document.getElementById('confirm-yes');
+const confirmNo = document.getElementById('confirm-no');
+function askConfirm(message){
+  return new Promise(resolve=>{
+    confirmText.textContent = message;
+    confirmBg.classList.add('show');
+    const cleanup = (val)=>{
+      confirmBg.classList.remove('show');
+      confirmYes.removeEventListener('click', onYes);
+      confirmNo.removeEventListener('click', onNo);
+      resolve(val);
+    };
+    const onYes = ()=>cleanup(true);
+    const onNo = ()=>cleanup(false);
+    confirmYes.addEventListener('click', onYes);
+    confirmNo.addEventListener('click', onNo);
+  });
+}
+
+// ---------------- Main exercise card renderer ----------------
+function renderExerciseCard(ex, day, i){
+  const exId = `${day.key}-${i}`;
+  const card = document.createElement('div');
+  card.className = 'ex-card';
+
+  let setRowsHtml = '';
+  for(let s=1;s<=ex.sets;s++){
+    setRowsHtml += `
+      <div class="set-row" data-set="${s}">
+        <span class="set-n">Set ${s}</span>
+        <input type="number" inputmode="decimal" class="w-input" placeholder="kg" min="0" step="0.5">
+        <span class="x">×</span>
+        <input type="number" inputmode="numeric" class="r-input" placeholder="reps (${ex.reps})" min="0" step="1">
+      </div>`;
+  }
+
+  const altsHtml = ex.alts.map(a => `
+    <span class="alt-chip${a.custom ? ' custom' : ''}" data-name="${a.name}" data-id="${a.id||''}">
+      <span class="alt-chip-label">${a.name}</span>
+      ${a.custom ? `<span class="alt-remove" data-id="${a.id}" title="Remove this custom exercise">×</span>` : ''}
+    </span>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="ex-main">
+      <div class="badge" data-role="badge">${i+1}</div>
+      <div class="ex-info">
+        <div class="ex-name" data-role="ex-name">${ex.n}</div>
+        <div class="ex-target">${ex.t}</div>
+        <div class="ex-slot-note" data-role="ex-slot-note" style="display:${ex.n !== ex.slot ? 'block' : 'none'}">Logged as: ${ex.slot}</div>
+      </div>
+      <div class="ex-nums"><span class="lbl">Target</span>${ex.sets} × ${ex.reps}</div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="ex-body"><div class="ex-body-inner">
+      <div class="alt-lbl">Swap options — tap to replace, or add your own</div>
+      <div class="alt-chips" data-role="alt-chips">
+        ${altsHtml}
+        <span class="alt-chip add-chip" data-role="add-alt">+ Add</span>
+      </div>
+      <div class="add-alt-form" data-role="add-alt-form" style="display:none;">
+        <input type="text" data-role="add-alt-input" placeholder="New exercise name">
+        <button class="add-alt-confirm" data-role="add-alt-confirm">Add</button>
+        <button class="add-alt-cancel" data-role="add-alt-cancel">Cancel</button>
+      </div>
+      <div class="log-lbl">Log today's sets</div>
+      <div class="set-rows" data-role="set-rows">${setRowsHtml}</div>
+      <button class="log-btn" data-role="log-btn" disabled>Log workout</button>
+      <div class="log-hint" data-role="log-hint">Fill in weight + reps for all ${ex.sets} sets to enable logging</div>
+      <div class="log-status" data-role="log-status"></div>
+    </div></div>
+  `;
+
+  const mainRow = card.querySelector('.ex-main');
+  const badgeEl = card.querySelector('[data-role="badge"]');
+  const nameEl = card.querySelector('[data-role="ex-name"]');
+  const slotNoteEl = card.querySelector('[data-role="ex-slot-note"]');
+  const logBtn = card.querySelector('[data-role="log-btn"]');
+  const logHint = card.querySelector('[data-role="log-hint"]');
+  const statusEl = card.querySelector('[data-role="log-status"]');
+  const altChipsEl = card.querySelector('[data-role="alt-chips"]');
+  const addAltBtn = card.querySelector('[data-role="add-alt"]');
+  const addAltForm = card.querySelector('[data-role="add-alt-form"]');
+  const addAltInput = card.querySelector('[data-role="add-alt-input"]');
+  const addAltConfirm = card.querySelector('[data-role="add-alt-confirm"]');
+  const addAltCancel = card.querySelector('[data-role="add-alt-cancel"]');
+  const setRowsEl = card.querySelector('[data-role="set-rows"]');
+
+  getLocalDone(exId).then(done=>{ if(done) card.classList.add('done'); });
+
+  mainRow.addEventListener('click', ()=>{ card.classList.toggle('open'); });
+
+  // ---- Feature 2: enable Log button only once every set row has weight + reps ----
+  function refreshLogBtnState(){
+    const rows = [...setRowsEl.querySelectorAll('.set-row')];
+    const allFilled = rows.every(r=>{
+      const w = r.querySelector('.w-input').value;
+      const rr = r.querySelector('.r-input').value;
+      return w !== '' && rr !== '';
+    });
+    logBtn.disabled = !allFilled;
+    logHint.style.display = allFilled ? 'none' : 'block';
+  }
+  setRowsEl.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', refreshLogBtnState);
+  });
+
+  // ---- Feature 1: click a swap chip to replace the main exercise ----
+  altChipsEl.addEventListener('click', async (e)=>{
+    const removeBtn = e.target.closest('.alt-remove');
+    if(removeBtn){
+      e.stopPropagation();
+      const id = removeBtn.dataset.id;
+      const ok = await askConfirm('Remove this custom exercise? It will disappear from every day where it appears as a swap option.');
+      if(!ok) return;
+      try{
+        await removeCustomExerciseServer(id);
+        stripCustomExerciseEverywhere(id);
+        renderDay(); // re-render whole day since it may affect other cards too
+      }catch(err){
+        alert('Could not remove exercise — check connection and try again.');
+      }
+      return;
+    }
+
+    const chip = e.target.closest('.alt-chip:not(.add-chip)');
+    if(chip){
+      e.stopPropagation();
+      const newName = chip.dataset.name;
+      const oldMain = { name: ex.n, custom:false, id:null };
+      // swap: chosen alt becomes main, previous main goes back into the alt list.
+      // ex.slot (the original slot name) never changes — it's what gets logged to the sheet.
+      ex.alts = ex.alts.filter(a => a.name !== newName);
+      ex.alts.push(oldMain);
+      ex.n = newName;
+      nameEl.textContent = ex.n;
+      if(ex.n !== ex.slot){
+        slotNoteEl.textContent = `Logged as: ${ex.slot}`;
+        slotNoteEl.style.display = 'block';
+      } else {
+        slotNoteEl.style.display = 'none';
+      }
+      // re-render the chip row in place
+      altChipsEl.innerHTML = ex.alts.map(a => `
+        <span class="alt-chip${a.custom ? ' custom' : ''}" data-name="${a.name}" data-id="${a.id||''}">
+          <span class="alt-chip-label">${a.name}</span>
+          ${a.custom ? `<span class="alt-remove" data-id="${a.id}" title="Remove this custom exercise">×</span>` : ''}
+        </span>
+      `).join('') + `<span class="alt-chip add-chip" data-role="add-alt">+ Add</span>`;
+      // rebind the "+ Add" button since innerHTML was replaced
+      card.querySelector('[data-role="add-alt"]').addEventListener('click', openAddAltForm);
+    }
+  });
+
+  function openAddAltForm(e){
+    e.stopPropagation();
+    addAltForm.style.display = 'flex';
+    addAltInput.value = '';
+    addAltInput.focus();
+  }
+  addAltBtn.addEventListener('click', openAddAltForm);
+  addAltCancel.addEventListener('click', (e)=>{ e.stopPropagation(); addAltForm.style.display='none'; });
+  addAltConfirm.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const name = addAltInput.value.trim();
+    if(!name) return;
+    addAltConfirm.disabled = true;
+    try{
+      const result = await addCustomExerciseServer(ex.n, name);
+      applyCustomExercises([{ id: result.id, mainExercise: ex.n, altName: name }]);
+      renderDay(); // re-render so every day showing this main exercise picks up the new alt
+    }catch(err){
+      alert('Could not save this exercise — check connection and try again.');
+      addAltConfirm.disabled = false;
+    }
+  });
+
+  logBtn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const rows = [...setRowsEl.querySelectorAll('.set-row')];
+    const toSend = rows.map(r=>{
+      const w = r.querySelector('.w-input').value;
+      const reps = r.querySelector('.r-input').value;
+      return { row: r, setNumber: Number(r.dataset.set), weight: w, reps: reps };
+    });
+
+    logBtn.disabled = true;
+    statusEl.textContent = `Logging ${toSend.length} set(s)...`;
+    statusEl.className = 'log-status';
+
+    let okCount = 0;
+    for(const item of toSend){
+      try{
+        await logSet({
+          workout_date: todayISO,
+          day_name: day.name,
+          section: 'Main',
+          exercise: ex.slot,
+          performed_as: (ex.n !== ex.slot) ? ex.n : '',
+          muscle_group: ex.t,
+          set_number: item.setNumber,
+          weight_kg: Number(item.weight),
+          reps: Number(item.reps)
+        });
+        item.row.classList.add('logged');
+        okCount++;
+      }catch(err){
+        // leave row unmarked so it's clear which one failed
+      }
+    }
+
+    if(okCount === toSend.length){
+      statusEl.textContent = `Logged ${okCount} set(s) ✓`;
+      statusEl.className = 'log-status ok';
+      card.classList.add('done');
+      badgeEl.textContent = '✓';
+      await setLocalDone(exId, true);
+    } else {
+      statusEl.textContent = `Logged ${okCount}/${toSend.length} — check connection and retry.`;
+      statusEl.className = 'log-status err';
+      logBtn.disabled = false; // let them retry
+    }
+  });
+
+  return card;
+}
+
+// ---------------- Warmup / Stretch mini-card renderer (feature 4 & 5) ----------------
+function renderAuxCard(exDef, section, dayKey){
+  const auxId = `${section}:${dayKey}:${exDef.n}`;
+  const card = document.createElement('div');
+  card.className = 'ex-card aux-card';
+
+  const fieldRows = exDef.fields.map(f => `
+    <div class="set-row">
+      <span class="set-n">${f.label}${f.unit ? ' ('+f.unit+')' : ''}</span>
+      <input type="number" inputmode="decimal" class="aux-input" data-key="${f.key}" data-label="${f.label}" placeholder="${f.label}" min="0" step="0.5">
+    </div>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="ex-main">
+      <div class="badge" data-role="badge">•</div>
+      <div class="ex-info">
+        <div class="ex-name">${exDef.n}</div>
+      </div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="ex-body"><div class="ex-body-inner">
+      <div class="set-rows" data-role="set-rows">${fieldRows}</div>
+      <button class="log-btn" data-role="log-btn" disabled>Log ${exDef.n}</button>
+      <div class="log-hint" data-role="log-hint">Fill in all fields to enable logging</div>
+      <div class="log-status" data-role="log-status"></div>
+    </div></div>
+  `;
+
+  const mainRow = card.querySelector('.ex-main');
+  const badgeEl = card.querySelector('[data-role="badge"]');
+  const logBtn = card.querySelector('[data-role="log-btn"]');
+  const logHint = card.querySelector('[data-role="log-hint"]');
+  const statusEl = card.querySelector('[data-role="log-status"]');
+  const setRowsEl = card.querySelector('[data-role="set-rows"]');
+  const inputs = [...setRowsEl.querySelectorAll('.aux-input')];
+
+  getLocalDone(auxId).then(done=>{ if(done){ card.classList.add('done'); badgeEl.textContent='✓'; } });
+
+  mainRow.addEventListener('click', ()=>{ card.classList.toggle('open'); });
+
+  function refreshLogBtnState(){
+    const allFilled = inputs.every(inp => inp.value !== '');
+    logBtn.disabled = !allFilled;
+    logHint.style.display = allFilled ? 'none' : 'block';
+  }
+  inputs.forEach(inp => inp.addEventListener('input', refreshLogBtnState));
+
+  logBtn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    logBtn.disabled = true;
+    statusEl.textContent = 'Logging...';
+    statusEl.className = 'log-status';
+
+    const day = DATA.find(d=>d.key===dayKey);
+    const metrics = {};
+    inputs.forEach(inp => { metrics[inp.dataset.label] = inp.value; });
+    const payload = {
+      workout_date: todayISO,
+      day_name: day.name,
+      section: section, // 'Warmup' or 'Stretch'
+      exercise: exDef.n,
+      metrics
+    };
+
+    try{
+      await logSet(payload);
+      statusEl.textContent = 'Logged ✓';
+      statusEl.className = 'log-status ok';
+      card.classList.add('done');
+      badgeEl.textContent = '✓';
+      await setLocalDone(auxId, true);
+    }catch(err){
+      statusEl.textContent = 'Failed — check connection and retry.';
+      statusEl.className = 'log-status err';
+      logBtn.disabled = false;
+    }
+  });
+
+  return card;
+}
+
+function renderAuxSection(title, list, section, dayKey){
+  const wrap = document.createElement('div');
+  wrap.className = 'aux-section';
+  const heading = document.createElement('div');
+  heading.className = 'aux-section-title';
+  heading.textContent = title;
+  wrap.appendChild(heading);
+  list.forEach(exDef=>{
+    wrap.appendChild(renderAuxCard(exDef, section, dayKey));
+  });
+  return wrap;
+}
+
+async function renderDay(){
+  const day = DATA.find(d=>d.key===activeDay);
+  panelTitle.textContent = day.name;
+  panelSub.textContent = day.rest ? 'Rest day' : `${day.groups} · ${day.exercises.length} exercises · ${totalSets(day)} sets`;
+
+  if(day.rest){
+    contentEl.innerHTML = `<div class="rest-card">
+      <div class="big">No lifting today</div>
+      <div>Sunday is the primary rest day — let the arms catch up on the volume they picked up all week.</div>
+    </div>`;
+    summaryStrip.innerHTML = '';
+    return;
+  }
+
+  contentEl.innerHTML = '';
+
+  // Feature 4: Warmup & Stretching — at the top
+  contentEl.appendChild(renderAuxSection('Warmup & Stretching', WARMUP_EXERCISES, 'Warmup', day.key));
+
+  for(let i=0;i<day.exercises.length;i++){
+    contentEl.appendChild(renderExerciseCard(day.exercises[i], day, i));
+  }
+
+  // Feature 5: Stretching & Finishing — at the end
+  contentEl.appendChild(renderAuxSection('Stretching & Finishing', STRETCH_EXERCISES, 'Stretch', day.key));
+
+  summaryStrip.innerHTML = `<span>${day.exercises.length} exercises today</span><span><b>${totalSets(day)}</b> total sets planned</span>`;
+}
+
+function renderTips(){
+  tipsList.innerHTML = TIPS.map(t=>`
+    <div class="tip-row">
+      <div class="tip-cat">${t.cat}</div>
+      ${t.rep ? `<div class="tip-rep">${t.rep}</div>` : ''}
+      <div class="tip-text">${t.text}</div>
+    </div>
+  `).join('');
+}
+
+const drawer = document.getElementById('drawer');
+const drawerBg = document.getElementById('drawer-bg');
+document.getElementById('tips-open').addEventListener('click', ()=>{
+  drawer.classList.add('show'); drawerBg.classList.add('show');
+});
+function closeDrawer(){ drawer.classList.remove('show'); drawerBg.classList.remove('show'); }
+document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+drawerBg.addEventListener('click', closeDrawer);
+
+// ---------------- Boot sequence ----------------
+(async function init(){
+  CURRENT_USER = await ensureAuthed(); // shows the login overlay and waits, if not already logged in
+  document.getElementById('user-who').textContent = CURRENT_USER.display_name || '';
+  document.getElementById('logout-btn').style.display = 'inline-block';
+
+  // If we got this far, /api/me already succeeded — that's proof enough the
+  // server is reachable and the session is valid, no separate ping needed.
+  document.getElementById('conn-dot').className = 'conn-dot ok';
+  document.getElementById('conn-text').textContent = 'connected';
+
+  renderRack();
+  renderTips();
+  // load persisted custom exercises before first render so swap chips are accurate immediately
+  const customList = await fetchCustomExercises();
+  applyCustomExercises(customList.map(c => ({ id: c.id, mainExercise: c.main_exercise, altName: c.custom_alt_name })));
+  renderDay();
+})();
+</script>
+</body>
+</html>
