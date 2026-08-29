@@ -32,9 +32,17 @@ services:
     # exactly what was built into the image, not live-editable local code.
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 
-  # Adminer is deliberately NOT included here. It has no rate limiting or
-  # brute-force protection and would be reachable by anyone who finds the
-  # port — fine for a local laptop, never fine on a public server.
+  # Adminer is bound to 127.0.0.1 only — this port is never reachable from
+  # the internet, even if OCI's security list allowed it, because it's not
+  # bound to 0.0.0.0. Access it via an SSH tunnel from your own machine
+  # (see the "Viewing the production database" section in DEPLOYMENT.md).
+  adminer:
+    image: adminer:4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - db
 
 volumes:
   pgdata:

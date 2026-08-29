@@ -55,3 +55,22 @@ I have no access to your OCI instance, so steps 1, 3, 4, and the actual
 GitHub secrets in step 5 all need you to do them directly. Everything else
 (the workflow file, the production compose file, this doc) is ready to use
 the moment those exist.
+
+## Viewing the production database
+
+Adminer runs in production too, but bound to `127.0.0.1:8080` on the server
+itself — not exposed to the internet at all, unlike local dev where it's
+fine to open directly. Access it through an SSH tunnel instead:
+
+```bash
+# Run this on YOUR machine, not the server:
+ssh -i ssh-key-2026-08-29.key -L 8080:localhost:8080 ubuntu@YOUR_SERVER_IP
+```
+
+Leave that terminal open, then visit `http://localhost:8080` in your own
+browser — it tunnels through the SSH connection to reach the server's
+Adminer instance. Log in with System: PostgreSQL, Server: `db`, Username:
+`gymuser`, Password: (your `POSTGRES_PASSWORD` from `.env`), Database:
+`gymtracker`.
+
+Close the SSH terminal when you're done to close the tunnel.
