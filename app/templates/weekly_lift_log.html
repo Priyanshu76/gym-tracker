@@ -596,6 +596,7 @@ const REAL_TODAY_ISO = new Date().toISOString().slice(0,10);
 // Day=Monday, corrupting consistency stats. Defaults to today, editable via
 // the date picker below for legitimately backfilling a missed day.
 let LOG_DATE = REAL_TODAY_ISO;
+let USER_GOAL = null;
 let activeDay = todayKey;
 
 document.getElementById('today-date').textContent =
@@ -1344,7 +1345,8 @@ async function renderDay(){
 }
 
 function renderTips(){
-  tipsList.innerHTML = TIPS.map(t=>`
+  const orderedTips = renderTipsForGoal(USER_GOAL);
+  tipsList.innerHTML = orderedTips.map(t=>`
     <div class="tip-row">
       <div class="tip-cat">${t.cat}</div>
       ${t.rep ? `<div class="tip-rep">${t.rep}</div>` : ''}
@@ -1403,6 +1405,14 @@ drawerBg.addEventListener('click', closeDrawer);
   });
 
   renderRack();
+  try{
+    const profileRes = await fetch('/api/profile');
+    if(profileRes.ok){
+      const profile = await profileRes.json();
+      if(profile) USER_GOAL = profile.goal;
+    }
+  }catch(e){}
+
   renderTips();
   // load persisted custom exercises before first render so swap chips are accurate immediately
   const customList = await fetchCustomExercises();

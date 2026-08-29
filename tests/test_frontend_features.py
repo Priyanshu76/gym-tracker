@@ -39,6 +39,16 @@ def test_workout_logs_page_has_export_button():
     assert "/api/workout-logs/export" in r.text
 
 
+def test_log_page_ties_guidelines_to_users_goal():
+    """Regression guard: renderTipsForGoal existed but was never called by
+    renderTips() in an earlier version of this feature — confirms the wiring
+    is actually complete, not just that the helper function exists."""
+    client = TestClient(app)
+    r = client.get("/")
+    assert "renderTipsForGoal(USER_GOAL)" in r.text
+    assert "TIPS.map(t=>" not in r.text  # the old unfiltered direct usage must be gone
+
+
 def test_dashboard_normalizes_muscle_group_taxonomy():
     client = TestClient(app)
     r = client.get("/dashboard")
