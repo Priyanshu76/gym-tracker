@@ -8,6 +8,11 @@ from app.config import get_settings
 
 settings = get_settings()
 
+# Strip any trailing slash once, here — every link below builds off this,
+# so a misconfigured SITE_BASE_URL with a trailing slash (a very easy typo
+# in a .env file) can no longer produce a broken //api/... double-slash URL.
+BASE_URL = settings.site_base_url.rstrip("/")
+
 
 def send_email(to: str, subject: str, body: str) -> None:
     msg = MIMEText(body, "plain", "utf-8")
@@ -22,7 +27,7 @@ def send_email(to: str, subject: str, body: str) -> None:
 
 
 def send_verification_email(to: str, display_name: str, request_id: str, token: str) -> None:
-    link = f"{settings.site_base_url}/api/verify-email?request_id={request_id}&token={token}"
+    link = f"{BASE_URL}/api/verify-email?request_id={request_id}&token={token}"
     body = (
         f"Hi {display_name},\n\n"
         "Click the link below to verify your email and send your signup request for approval:\n\n"
@@ -33,8 +38,8 @@ def send_verification_email(to: str, display_name: str, request_id: str, token: 
 
 
 def send_admin_notification(username: str, display_name: str, email: str, request_id: str, approval_token: str) -> None:
-    approve_link = f"{settings.site_base_url}/api/approve-signup?request_id={request_id}&token={approval_token}"
-    reject_link = f"{settings.site_base_url}/api/reject-signup?request_id={request_id}&token={approval_token}"
+    approve_link = f"{BASE_URL}/api/approve-signup?request_id={request_id}&token={approval_token}"
+    reject_link = f"{BASE_URL}/api/reject-signup?request_id={request_id}&token={approval_token}"
     body = (
         "A new signup request is waiting for your review.\n\n"
         f"Username: {username}\nDisplay name: {display_name}\nEmail: {email}\n\n"
@@ -44,7 +49,7 @@ def send_admin_notification(username: str, display_name: str, email: str, reques
 
 
 def send_welcome_email(to: str, display_name: str, username: str, temp_password: str) -> None:
-    login_link = f"{settings.site_base_url}/login"
+    login_link = f"{BASE_URL}/"
     body = (
         f"Hi {display_name},\n\n"
         "Your account has been approved. Here are your login details:\n\n"
@@ -66,7 +71,7 @@ def send_rejection_email(to: str, display_name: str) -> None:
 
 
 def send_reset_email(to: str, display_name: str, username: str, token: str) -> None:
-    link = f"{settings.site_base_url}/reset-password?username={username}&token={token}"
+    link = f"{BASE_URL}/reset-password?username={username}&token={token}"
     body = (
         f"Hi {display_name},\n\n"
         "Click the link below to set a new password. This link expires in 1 hour.\n\n"
