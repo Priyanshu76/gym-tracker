@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from app.models.workout_log import Section
+from app.models.workout_log import Section, SetType
 
 
 class LogSetRequest(BaseModel):
@@ -17,6 +17,8 @@ class LogSetRequest(BaseModel):
     set_number: int | None = None
     weight_kg: float | None = None
     reps: int | None = None
+    rpe: float | None = None  # 1.0-10.0
+    set_type: SetType = SetType.working
     metrics: dict | None = None  # Warmup/Stretch generic fields — replaces the old fixed Field1-3 columns
 
     @field_validator("weight_kg")
@@ -31,6 +33,13 @@ class LogSetRequest(BaseModel):
     def validate_reps(cls, v, info):
         if info.data.get("section") == Section.main and v is not None and not (0 <= v <= 100):
             raise ValueError("Reps must be between 0 and 100.")
+        return v
+
+    @field_validator("rpe")
+    @classmethod
+    def validate_rpe(cls, v):
+        if v is not None and not (1 <= v <= 10):
+            raise ValueError("RPE must be between 1 and 10.")
         return v
 
 
@@ -48,4 +57,6 @@ class WorkoutLogOut(BaseModel):
     set_number: int | None
     weight_kg: float | None
     reps: int | None
+    rpe: float | None
+    set_type: SetType
     metrics: dict | None

@@ -16,6 +16,14 @@ class Section(str, enum.Enum):
     stretch = "Stretch"
 
 
+class SetType(str, enum.Enum):
+    working = "working"
+    warmup = "warmup"
+    drop_set = "drop_set"
+    amrap = "amrap"
+    failure = "failure"
+
+
 class WorkoutLog(Base):
     __tablename__ = "workout_logs"
 
@@ -35,6 +43,8 @@ class WorkoutLog(Base):
     set_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     weight_kg: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)
     reps: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rpe: Mapped[float | None] = mapped_column(Numeric(3, 1), nullable=True)  # 1.0-10.0, RPE/RIR scale
+    set_type: Mapped[SetType] = mapped_column(Enum(SetType), nullable=False, default=SetType.working)
 
     # Warmup/Stretch fields — the old Field1-3 Label/Value columns collapse into
     # one JSON column here; Postgres's JSONB lets us query into it if needed

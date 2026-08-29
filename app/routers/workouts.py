@@ -30,6 +30,8 @@ def log_set(
         set_number=payload.set_number,
         weight_kg=payload.weight_kg,
         reps=payload.reps,
+        rpe=payload.rpe,
+        set_type=payload.set_type,
         metrics=payload.metrics,
     )
     db.add(log)
@@ -46,6 +48,35 @@ def get_progress(
         db.query(WorkoutLog)
         .filter(WorkoutLog.user_id == user.id)
         .order_by(WorkoutLog.logged_at)
+        .all()
+    )
+
+
+@router.get("/workout-logs/last", response_model=list[WorkoutLogOut])
+def get_last_session_for_exercise(
+    exercise: str,
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """
+    Powers the 'last time you did this' reference and the 'repeat last
+    workout' autofill — both explicitly missing per the platform analysis.
+    Returns every set from the most recent date this exercise was logged,
+    not just one row, since a full session usually has multiple sets.
+    """
+    last_date_row = (
+        db.query(WorkoutLog.workout_date)
+        .filter(WorkoutLog.user_id == user.id, WorkoutLog.exercise == exercise, WorkoutLog.section == "Main")
+        .order_by(WorkoutLog.workout_date.desc())
+        .first()
+    )
+    if not last_date_row:
+        return []
+    last_date = last_date_row[0]
+    return (
+        db.query(WorkoutLog)
+        .filter(WorkoutLog.user_id == user.id, WorkoutLog.exercise == exercise, WorkoutLog.workout_date == last_date)
+        .order_by(WorkoutLog.set_number)
         .all()
     )
 
@@ -70,6 +101,8 @@ def edit_workout_log(
     log.set_number = payload.set_number
     log.weight_kg = payload.weight_kg
     log.reps = payload.reps
+    log.rpe = payload.rpe
+    log.set_type = payload.set_type
     log.metrics = payload.metrics
     db.commit()
     db.refresh(log)
