@@ -102,6 +102,26 @@
     <button type="submit" class="submit-btn" id="submit-btn">Save and continue</button>
     <div class="msg" id="msg"></div>
   </form>
+
+  <div id="account-section" style="display:none; margin-top:28px; padding-top:20px; border-top:1px solid var(--line);">
+    <p class="eyebrow" style="margin-bottom:12px;">Account</p>
+
+    <form id="change-password-form" style="margin-bottom:20px;">
+      <div class="field">
+        <label for="current-password">Current password</label>
+        <input type="password" id="current-password" autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label for="new-password">New password</label>
+        <input type="password" id="new-password" autocomplete="new-password" required minlength="8">
+      </div>
+      <button type="submit" class="submit-btn" id="change-password-btn" style="background:var(--surface-2); color:var(--chalk); border:1px solid var(--line);">Change password</button>
+      <div class="msg" id="password-msg"></div>
+    </form>
+
+    <button type="button" id="delete-account-btn" style="width:100%; padding:11px; border:1px solid var(--rust); background:none; color:var(--rust); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Delete my account</button>
+    <div class="msg" id="delete-msg"></div>
+  </div>
 </div>
 
 <script>
@@ -123,6 +143,7 @@ async function checkMe(){
         document.getElementById('page-title').textContent = 'Edit your profile';
         document.getElementById('page-sub').textContent = 'Update your goals and preferences any time.';
         document.getElementById('back-link').style.display = 'inline-block';
+        document.getElementById('account-section').style.display = 'block';
         document.getElementById('goal').value = p.goal;
         document.getElementById('experience_level').value = p.experience_level;
         document.getElementById('equipment_access').value = p.equipment_access;
@@ -185,6 +206,69 @@ form.addEventListener('submit', async (e)=>{
     msgEl.className = 'msg err';
     btn.disabled = false;
     btn.textContent = 'Save and continue';
+  }
+});
+
+// ---------------- Change password ----------------
+const pwForm = document.getElementById('change-password-form');
+const pwMsg = document.getElementById('password-msg');
+const pwBtn = document.getElementById('change-password-btn');
+pwForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  pwMsg.textContent = '';
+  pwMsg.className = 'msg';
+  pwBtn.disabled = true;
+  pwBtn.textContent = 'Saving…';
+  try{
+    const res = await fetch('/api/change-password', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        current_password: document.getElementById('current-password').value,
+        new_password: document.getElementById('new-password').value,
+      })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      pwMsg.textContent = extractErrorMessage(data, 'Could not change password.');
+      pwMsg.className = 'msg err';
+    } else {
+      pwMsg.textContent = data.message || 'Password changed.';
+      pwMsg.className = 'msg ok';
+      pwForm.reset();
+    }
+  }catch(err){
+    pwMsg.textContent = 'Could not reach the server — check your connection.';
+    pwMsg.className = 'msg err';
+  }
+  pwBtn.disabled = false;
+  pwBtn.textContent = 'Change password';
+});
+
+// ---------------- Delete account ----------------
+document.getElementById('delete-account-btn').addEventListener('click', async ()=>{
+  const confirmed = confirm("Delete your account permanently? This removes all your workout logs, plans, and profile data. This cannot be undone.");
+  if(!confirmed) return;
+  const currentPassword = prompt("Enter your current password to confirm:");
+  if(!currentPassword) return;
+
+  const deleteMsg = document.getElementById('delete-msg');
+  try{
+    const res = await fetch('/api/account/delete', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ current_password: currentPassword })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      deleteMsg.textContent = extractErrorMessage(data, 'Could not delete account.');
+      deleteMsg.className = 'msg err';
+      return;
+    }
+    location.href = '/';
+  }catch(err){
+    deleteMsg.textContent = 'Could not reach the server — check your connection.';
+    deleteMsg.className = 'msg err';
   }
 });
 </script>

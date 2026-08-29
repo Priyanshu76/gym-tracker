@@ -11,6 +11,8 @@ from app.models.pending_signup import PendingSignup, SignupStatus
 from app.models.session import Session as SessionModel
 from app.models.user import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
+    DeleteAccountRequest,
     ForgotPasswordRequest,
     LoginRequest,
     LoginResponse,
@@ -39,6 +41,56 @@ SESSION_TTL_DAYS = 30
 
 def _now():
     return datetime.now(timezone.utc)
+
+
+@router.post("/change-password", response_model=MessageResponse)
+def change_password(
+    payload: ChangePasswordRequest,
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """
+    In-app password change while logged in — distinct from the forgot-
+    password flow, which requires an email round-trip. Requires the current
+    password so a hijacked but still-valid session can't silently lock the
+    real owner out by changing it to something else.
+    """
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+
+    user.password_hash = hash_password(payload.new_password)
+    db.commit()
+
+    # Changing your password should invalidate every OTHER session — the
+    # same reasoning as the forgot-password flow, applied here too.
+    db.query(SessionModel).filter(SessionModel.user_id == user.id, SessionModel.revoked.is_(False)).update(
+        {"revoked": True}
+    )
+    db.commit()
+
+    return MessageResponse(success=True, message="Password changed. Other sessions have been logged out.")
+
+
+@router.post("/account/delete", response_model=MessageResponse)
+def delete_account(
+    payload: DeleteAccountRequest,
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """
+    Deletes the account and everything tied to it. Every related table
+    (sessions, workout_logs, custom_exercises, user_profiles, workout_plans)
+    already has ondelete='CASCADE' on its user_id foreign key, so this one
+    delete is genuinely sufficient — no manual cleanup of related rows needed.
+    Requires the current password as confirmation, same reasoning as password
+    change: a hijacked session shouldn't be able to destroy the account either.
+    """
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+
+    db.delete(user)
+    db.commit()
+    return MessageResponse(success=True, message="Account deleted.")
 
 
 @router.get("/me")
