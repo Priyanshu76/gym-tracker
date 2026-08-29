@@ -96,13 +96,22 @@ def _adjust_reps_for_goal(exercise: Exercise, goal: str) -> tuple[int, int, int]
     return exercise.default_sets, exercise.default_reps_low, exercise.default_reps_high
 
 
-def generate_plan_options(profile: UserProfile, db: DBSession, num_options: int = 3) -> list[GeneratedPlan]:
+def generate_plan_options(profile: UserProfile, db: DBSession, num_options: int = 3, extra_seed: str = "") -> list[GeneratedPlan]:
+    """
+    extra_seed lets the caller control reproducibility: the API endpoint
+    passes a fresh random value on every call, so hitting "Generate new
+    options" twice actually gives different results — this was flagged as
+    a bug (repeated generation always returned the same plan) because the
+    original seed was purely (user_id, variant), which is great for tests
+    but wrong for the product. Tests pass a fixed extra_seed to keep
+    verifying determinism given identical inputs.
+    """
     template = SPLIT_TEMPLATES[profile.days_per_week]
     rest_days_needed = 7 - len(template)
 
     options = []
     for variant in range(num_options):
-        rng = random.Random(f"{profile.user_id}-{variant}")  # deterministic per (user, variant)
+        rng = random.Random(f"{profile.user_id}-{variant}-{extra_seed}")
         days = []
         day_idx = 0
 

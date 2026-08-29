@@ -40,7 +40,7 @@ def generate_plans(user: User = Depends(get_current_user), db: DBSession = Depen
     if not profile:
         raise HTTPException(status_code=400, detail="Complete your profile before generating a plan.")
 
-    options = generate_plan_options(profile, db, num_options=3)
+    options = generate_plan_options(profile, db, num_options=3, extra_seed=str(uuid.uuid4()))
 
     saved_plans = []
     for option in options:

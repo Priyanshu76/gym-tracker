@@ -31,11 +31,14 @@
   .msg{ font-size:13px; margin-top:14px; text-align:center; min-height:16px; }
   .msg.err{ color:var(--rust); }
   .msg.ok{ color:var(--green); }
+  .back-link{ display:none; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--steel); text-decoration:none; margin-bottom:14px; }
+  .back-link:hover{ color:var(--accent); }
 </style>
 <script src="/static/js/icons.js"></script>
 </head>
 <body>
 <div class="box">
+  <a href="/" class="back-link" id="back-link" style="display:none;">← Back</a>
   <p class="eyebrow">Gym Tracker</p>
   <h1 id="page-title">Tell us about your goals</h1>
   <p class="sub" id="page-sub">This shapes the workout plans we generate for you — you can change any of it later from your profile.</p>
@@ -119,6 +122,7 @@ async function checkMe(){
       if(p){
         document.getElementById('page-title').textContent = 'Edit your profile';
         document.getElementById('page-sub').textContent = 'Update your goals and preferences any time.';
+        document.getElementById('back-link').style.display = 'inline-block';
         document.getElementById('goal').value = p.goal;
         document.getElementById('experience_level').value = p.experience_level;
         document.getElementById('equipment_access').value = p.equipment_access;

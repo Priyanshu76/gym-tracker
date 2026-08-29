@@ -119,6 +119,22 @@
   @media (max-width:600px){
     .filter-count{ margin-left:0; width:100%; text-align:left; }
   }
+  /* ---- Confirm / edit modals ---- */
+  .confirm-bg{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:20; padding:20px; }
+  .confirm-bg.show{ display:flex; }
+  .confirm-box{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px; max-width:320px; width:100%; }
+  .confirm-box p{ font-size:14px; line-height:1.5; margin:0 0 16px; color:var(--chalk); }
+  .confirm-actions{ display:flex; gap:8px; }
+  .confirm-actions button{ flex:1; padding:10px; border-radius:6px; border:none; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer; }
+  .confirm-actions .yes{ background:var(--rust); color:#fff; }
+  .confirm-actions .no{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
+  .edit-field{ margin-bottom:12px; }
+  .edit-field label{ display:block; font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; font-family:'JetBrains Mono', monospace; }
+  .edit-field input{ width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:14px; padding:8px 10px; }
+  .row-actions{ display:flex; gap:6px; white-space:nowrap; }
+  .row-actions button{ background:none; border:1px solid var(--line); border-radius:5px; color:var(--steel); padding:4px 6px; cursor:pointer; display:inline-flex; }
+  .row-actions button:hover{ border-color:var(--accent); color:var(--accent); }
+  .row-actions .delete-btn:hover{ border-color:var(--rust); color:var(--rust); }
 </style>
 <script src="/static/js/icons.js"></script>
 </head>
@@ -151,7 +167,7 @@
       <button type="submit" class="auth-submit" id="auth-submit">Log in</button>
       <div class="auth-error" id="auth-error"></div>
     </form>
-    <div class="auth-links"><a href="/signup">Sign up</a><span class="sep">·</span><a href="/reset-password">Forgot password?</a></div>
+    <div class="auth-links"><a href="/signup">Request access</a><span class="sep">·</span><a href="/reset-password">Forgot password?</a></div>
   </div>
 </div>
 
@@ -337,6 +353,7 @@ async function load(){
   ALL_ROWS = (rows || [])
     .filter(r => r.exercise && r.workout_date)
     .map(r => ({
+      id: r.id,
       date: r.workout_date,
       day: r.day_name,
       timestamp: r.logged_at,
@@ -393,7 +410,7 @@ function buildShell(){
       <table>
         <thead>
           <tr>
-            <th>Date</th><th>Time</th><th>Day</th><th>Section</th><th>Exercise</th><th>Muscle Group</th><th>Details</th>
+            <th>Date</th><th>Time</th><th>Day</th><th>Section</th><th>Exercise</th><th>Muscle Group</th><th>Details</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="log-tbody"></tbody>
@@ -491,11 +508,12 @@ function renderTable(){
 
   const tbody = document.getElementById('log-tbody');
   if(pageRows.length === 0){
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--steel);padding:24px;">No entries match these filters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--steel);padding:24px;">No entries match these filters.</td></tr>`;
   } else {
     tbody.innerHTML = pageRows.map(r=>{
       const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'}) : '—';
       const secClass = r.section === 'Main' ? 'main' : r.section === 'Warmup' ? 'warmup' : 'stretch';
+      const canEdit = r.section === 'Main'; // weight/reps editing only makes sense for Main sets
       return `
         <tr>
           <td>${r.date}</td>
@@ -505,9 +523,20 @@ function renderTable(){
           <td class="ex-cell">${r.exercise}${r.performedAs ? `<span class="performed-as">as ${r.performedAs}</span>` : ''}</td>
           <td>${r.muscleGroup || '—'}</td>
           <td class="details-cell">${detailsFor(r)}</td>
+          <td class="row-actions">
+            ${canEdit ? `<button class="edit-btn" data-id="${r.id}" title="Edit">${icon('edit',14)}</button>` : ''}
+            <button class="delete-btn" data-id="${r.id}" title="Delete">${icon('trash',14)}</button>
+          </td>
         </tr>
       `;
     }).join('');
+
+    tbody.querySelectorAll('.delete-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> handleDelete(btn.dataset.id));
+    });
+    tbody.querySelectorAll('.edit-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditModal(btn.dataset.id));
+    });
   }
 
   const pagEl = document.getElementById('pagination');
@@ -524,7 +553,112 @@ function renderTable(){
   }
 }
 
+// ---------------- Confirm / Delete / Edit ----------------
+const confirmBg = document.getElementById('confirm-bg');
+const confirmText = document.getElementById('confirm-text');
+const confirmYes = document.getElementById('confirm-yes');
+const confirmNo = document.getElementById('confirm-no');
+function askConfirm(message){
+  return new Promise(resolve=>{
+    confirmText.textContent = message;
+    confirmBg.classList.add('show');
+    const cleanup = (val)=>{
+      confirmBg.classList.remove('show');
+      confirmYes.removeEventListener('click', onYes);
+      confirmNo.removeEventListener('click', onNo);
+      resolve(val);
+    };
+    const onYes = ()=>cleanup(true);
+    const onNo = ()=>cleanup(false);
+    confirmYes.addEventListener('click', onYes);
+    confirmNo.addEventListener('click', onNo);
+  });
+}
+
+async function handleDelete(id){
+  const ok = await askConfirm('Delete this logged set? This cannot be undone.');
+  if(!ok) return;
+  try{
+    const res = await authFetch(`/api/workout-logs/${id}`, { method:'DELETE' });
+    if(!res.ok) throw new Error('failed');
+    await load();
+  }catch(e){
+    alert('Could not delete this entry — check your connection and try again.');
+  }
+}
+
+const editBg = document.getElementById('edit-bg');
+const editWeight = document.getElementById('edit-weight');
+const editReps = document.getElementById('edit-reps');
+const editSave = document.getElementById('edit-save');
+const editCancel = document.getElementById('edit-cancel');
+let editingRow = null;
+
+function openEditModal(id){
+  editingRow = ALL_ROWS.find(r => r.id === id);
+  if(!editingRow) return;
+  editWeight.value = editingRow.weight ?? '';
+  editReps.value = editingRow.reps ?? '';
+  editBg.classList.add('show');
+}
+editCancel.addEventListener('click', ()=>{ editBg.classList.remove('show'); editingRow = null; });
+editSave.addEventListener('click', async ()=>{
+  if(!editingRow) return;
+  const newWeight = Number(editWeight.value);
+  const newReps = Number(editReps.value);
+  if(isNaN(newWeight) || isNaN(newReps) || newWeight < 0 || newReps < 0 || newWeight > 500 || newReps > 100){
+    alert('Please enter valid values (weight 0-500kg, reps 0-100).');
+    return;
+  }
+  try{
+    const res = await authFetch(`/api/workout-logs/${editingRow.id}`, {
+      method:'PATCH',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        workout_date: editingRow.date, day_name: editingRow.day, section: editingRow.section,
+        exercise: editingRow.exercise, performed_as: editingRow.performedAs || null,
+        muscle_group: editingRow.muscleGroup, set_number: editingRow.setNumber,
+        weight_kg: newWeight, reps: newReps,
+      })
+    });
+    if(!res.ok) throw new Error('failed');
+    editBg.classList.remove('show');
+    editingRow = null;
+    await load();
+  }catch(e){
+    alert('Could not save changes — check your connection and try again.');
+  }
+});
+
 load();
 </script>
+<div class="confirm-bg" id="confirm-bg">
+  <div class="confirm-box">
+    <p id="confirm-text">Are you sure?</p>
+    <div class="confirm-actions">
+      <button class="no" id="confirm-no">Cancel</button>
+      <button class="yes" id="confirm-yes">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirm-bg" id="edit-bg">
+  <div class="confirm-box">
+    <p style="margin-bottom:12px;font-weight:600;">Edit set</p>
+    <div class="edit-field">
+      <label>Weight (kg)</label>
+      <input type="number" id="edit-weight" min="0" max="500" step="0.5">
+    </div>
+    <div class="edit-field">
+      <label>Reps</label>
+      <input type="number" id="edit-reps" min="0" max="100" step="1">
+    </div>
+    <div class="confirm-actions">
+      <button class="no" id="edit-cancel">Cancel</button>
+      <button class="yes" id="edit-save" style="background:var(--accent);color:#1a1a1a;">Save</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -80,6 +80,14 @@
   .day-tab.rest .plate{ background:var(--line); }
 
   .panel-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--line); }
+  .log-date-row{ display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:12.5px; color:var(--steel); flex-wrap:wrap; }
+  .log-date-row label{ font-family:'JetBrains Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .log-date-row input[type="date"]{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk);
+    font-family:'Inter', sans-serif; font-size:13px; padding:6px 10px;
+  }
+  .log-date-row input[type="date"]:focus{ outline:none; border-color:var(--accent); }
+  .backfill-note{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--rust); background:rgba(176,71,47,.12); padding:4px 10px; border-radius:12px; }
   .panel-head h2{ font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:20px; margin:0; font-weight:600; }
   .panel-head .sub{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--steel); }
 
@@ -156,6 +164,8 @@
 
   .set-rows{ margin-top:16px; }
   .set-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .set-row.outlier input{ border-color:var(--rust); }
+  .set-row.outlier .set-n{ color:var(--rust); }
   .set-row .set-n{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--steel); width:96px; flex:none; }
   .set-row input{
     background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
@@ -212,6 +222,21 @@
   .confirm-actions .yes{ background:var(--rust); color:#fff; }
   .confirm-actions .no{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
 
+  /* ---- Toast ---- */
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--surface-2); border:1px solid var(--line); border-radius:8px;
+    padding:12px 16px; display:flex; align-items:center; gap:14px; font-size:13px;
+    box-shadow:0 6px 20px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:all .2s ease; z-index:30;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+  .toast-undo{
+    background:none; border:1px solid var(--accent); color:var(--accent); border-radius:5px;
+    padding:5px 10px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase;
+    font-size:11px; cursor:pointer; flex:none;
+  }
+  .toast-undo:hover{ background:var(--accent); color:#0a1512; }
+
   /* ---- Login overlay ---- */
   .auth-overlay{ position:fixed; inset:0; background:var(--bg); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
   .auth-overlay.show{ display:flex; }
@@ -245,6 +270,13 @@
   }
   .logout-btn:hover{ border-color:var(--rust); color:var(--rust); }
 
+  @media (max-width:900px) and (min-width:481px){
+    .wrap{ padding-left:14px; padding-right:14px; }
+    .rack{ gap:5px; }
+    .set-row .set-n{ width:84px; }
+    .ex-nums{ font-size:12px; }
+  }
+
   @media (max-width:480px){
     .rack{ gap:4px; }
     .day-tab{ padding:6px 2px 8px; }
@@ -276,6 +308,12 @@
   <div class="panel-head">
     <h2 id="panel-title">—</h2>
     <span class="sub" id="panel-sub">—</span>
+  </div>
+
+  <div class="log-date-row">
+    <label for="log-date-picker">Logging for:</label>
+    <input type="date" id="log-date-picker">
+    <span class="backfill-note" id="backfill-note" style="display:none;">Not today — double-check before logging</span>
   </div>
 
   <div id="content"></div>
@@ -317,7 +355,7 @@
       <button type="submit" class="auth-submit" id="auth-submit">Log in</button>
       <div class="auth-error" id="auth-error"></div>
     </form>
-    <div class="auth-links"><a href="/signup">Sign up</a><span class="sep">·</span><a href="/reset-password">Forgot password?</a></div>
+    <div class="auth-links"><a href="/signup">Request access</a><span class="sep">·</span><a href="/reset-password">Forgot password?</a></div>
   </div>
 </div>
 
@@ -514,7 +552,13 @@ const tipsList = document.getElementById('tips-list');
 
 const JS_DAY_TO_KEY = ['sun','mon','tue','wed','thu','fri','sat'];
 const todayKey = JS_DAY_TO_KEY[new Date().getDay()];
-const todayISO = new Date().toISOString().slice(0,10);
+const REAL_TODAY_ISO = new Date().toISOString().slice(0,10);
+// LOG_DATE is what actually gets stamped on every logged set — separate from
+// which weekday TAB is being viewed. Fixes a real bug: viewing "Monday" on a
+// Saturday and logging a set used to silently record Date=Saturday,
+// Day=Monday, corrupting consistency stats. Defaults to today, editable via
+// the date picker below for legitimately backfilling a missed day.
+let LOG_DATE = REAL_TODAY_ISO;
 let activeDay = todayKey;
 
 document.getElementById('today-date').textContent =
@@ -684,14 +728,14 @@ function renderRack(){
 async function getLocalDone(exId){
   try{
     const uid = CURRENT_USER ? CURRENT_USER.username : 'anon';
-    const raw = localStorage.getItem(`done:${uid}:${todayISO}:${exId}`);
+    const raw = localStorage.getItem(`done:${uid}:${LOG_DATE}:${exId}`);
     return raw ? JSON.parse(raw) : false;
   }catch(e){ return false; }
 }
 async function setLocalDone(exId, val){
   try{
     const uid = CURRENT_USER ? CURRENT_USER.username : 'anon';
-    localStorage.setItem(`done:${uid}:${todayISO}:${exId}`, JSON.stringify(val));
+    localStorage.setItem(`done:${uid}:${LOG_DATE}:${exId}`, JSON.stringify(val));
   }catch(e){}
 }
 
@@ -758,6 +802,29 @@ const confirmBg = document.getElementById('confirm-bg');
 const confirmText = document.getElementById('confirm-text');
 const confirmYes = document.getElementById('confirm-yes');
 const confirmNo = document.getElementById('confirm-no');
+// ---------------- Toast (with optional Undo) ----------------
+let toastTimer = null;
+function showToast(message, undoCallback){
+  let el = document.getElementById('toast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  clearTimeout(toastTimer);
+  el.innerHTML = `<span>${message}</span>${undoCallback ? '<button class="toast-undo">Undo</button>' : ''}`;
+  el.classList.add('show');
+  if(undoCallback){
+    el.querySelector('.toast-undo').addEventListener('click', ()=>{
+      undoCallback();
+      el.classList.remove('show');
+      clearTimeout(toastTimer);
+    });
+  }
+  toastTimer = setTimeout(()=> el.classList.remove('show'), 5000);
+}
+
 function askConfirm(message){
   return new Promise(resolve=>{
     confirmText.textContent = message;
@@ -800,9 +867,9 @@ function renderExerciseCard(ex, day, i){
     setRowsHtml += `
       <div class="set-row" data-set="${s}">
         <span class="set-n">Set ${s}</span>
-        <input type="number" inputmode="decimal" class="w-input" placeholder="kg" min="0" step="0.5">
+        <input type="number" inputmode="decimal" class="w-input" placeholder="kg" min="0" max="500" step="0.5">
         <span class="x">×</span>
-        <input type="number" inputmode="numeric" class="r-input" placeholder="reps (${ex.reps})" min="0" step="1">
+        <input type="number" inputmode="numeric" class="r-input" placeholder="reps (${ex.reps})" min="0" max="100" step="1">
       </div>`;
   }
 
@@ -863,12 +930,22 @@ function renderExerciseCard(ex, day, i){
   mainRow.addEventListener('click', ()=>{ card.classList.toggle('open'); });
 
   // ---- Feature 2: enable Log button only once every set row has weight + reps ----
+  function isOutlier(weight, reps){
+    const w = Number(weight), r = Number(reps);
+    return w < 0 || r < 0 || w > 300 || r > 50;
+  }
+
   function refreshLogBtnState(){
     const rows = [...setRowsEl.querySelectorAll('.set-row')];
     const allFilled = rows.every(r=>{
       const w = r.querySelector('.w-input').value;
       const rr = r.querySelector('.r-input').value;
       return w !== '' && rr !== '';
+    });
+    rows.forEach(r=>{
+      const w = r.querySelector('.w-input').value;
+      const rr = r.querySelector('.r-input').value;
+      r.classList.toggle('outlier', w !== '' && rr !== '' && isOutlier(w, rr));
     });
     logBtn.disabled = !allFilled;
     logHint.style.display = allFilled ? 'none' : 'block';
@@ -899,6 +976,8 @@ function renderExerciseCard(ex, day, i){
     if(chip){
       e.stopPropagation();
       const newName = chip.dataset.name;
+      const previousN = ex.n; // captured for the undo toast
+      const previousAlts = ex.alts.map(a => ({...a})); // shallow copy, restored verbatim on undo
       const oldMain = { name: ex.n, custom:false, id:null };
       // swap: chosen alt becomes main, previous main goes back into the alt list.
       // ex.slot (the original slot name) never changes — it's what gets logged to the sheet.
@@ -912,17 +991,28 @@ function renderExerciseCard(ex, day, i){
       } else {
         slotNoteEl.style.display = 'none';
       }
-      // re-render the chip row in place
-      altChipsEl.innerHTML = ex.alts.map(a => `
-        <span class="alt-chip${a.custom ? ' custom' : ''}" data-name="${a.name}" data-id="${a.id||''}">
-          <span class="alt-chip-label">${a.name}</span>
-          ${a.custom ? `<span class="alt-remove" data-id="${a.id}" title="Remove this custom exercise">×</span>` : ''}
-        </span>
-      `).join('') + `<span class="alt-chip add-chip" data-role="add-alt">+ Add</span>`;
-      // rebind the "+ Add" button since innerHTML was replaced
-      card.querySelector('[data-role="add-alt"]').addEventListener('click', openAddAltForm);
+      showToast(`Swapped to ${newName}`, ()=>{
+        ex.n = previousN;
+        ex.alts = previousAlts;
+        nameEl.textContent = ex.n;
+        slotNoteEl.style.display = (ex.n !== ex.slot) ? 'block' : 'none';
+        if(ex.n !== ex.slot) slotNoteEl.textContent = `Logged as: ${ex.slot}`;
+        rerenderAltChips();
+      });
+      rerenderAltChips();
     }
   });
+
+  function rerenderAltChips(){
+    altChipsEl.innerHTML = ex.alts.map(a => `
+      <span class="alt-chip${a.custom ? ' custom' : ''}" data-name="${a.name}" data-id="${a.id||''}">
+        <span class="alt-chip-label">${a.name}</span>
+        ${a.custom ? `<span class="alt-remove" data-id="${a.id}" title="Remove this custom exercise">×</span>` : ''}
+      </span>
+    `).join('') + `<span class="alt-chip add-chip" data-role="add-alt">+ Add</span>`;
+    // rebind the "+ Add" button since innerHTML was replaced
+    card.querySelector('[data-role="add-alt"]').addEventListener('click', openAddAltForm);
+  }
 
   function openAddAltForm(e){
     e.stopPropagation();
@@ -956,6 +1046,12 @@ function renderExerciseCard(ex, day, i){
       return { row: r, setNumber: Number(r.dataset.set), weight: w, reps: reps };
     });
 
+    const hasOutlier = toSend.some(item => isOutlier(item.weight, item.reps));
+    if(hasOutlier){
+      const ok = await askConfirm("One or more sets look unusual (very heavy weight or a high rep count) — log anyway?");
+      if(!ok) return;
+    }
+
     logBtn.disabled = true;
     statusEl.textContent = `Logging ${toSend.length} set(s)...`;
     statusEl.className = 'log-status';
@@ -964,7 +1060,7 @@ function renderExerciseCard(ex, day, i){
     for(const item of toSend){
       try{
         await logSet({
-          workout_date: todayISO,
+          workout_date: LOG_DATE,
           day_name: day.name,
           section: 'Main',
           exercise: ex.slot,
@@ -1055,7 +1151,7 @@ function renderAuxCard(exDef, section, dayKey){
     const metrics = {};
     inputs.forEach(inp => { metrics[inp.dataset.label] = inp.value; });
     const payload = {
-      workout_date: todayISO,
+      workout_date: LOG_DATE,
       day_name: day.name,
       section: section, // 'Warmup' or 'Stretch'
       exercise: exDef.n,
@@ -1166,6 +1262,19 @@ drawerBg.addEventListener('click', closeDrawer);
       }
     }
   }catch(e){}
+
+  // Date picker wiring — changing it updates LOG_DATE, which is what every
+  // logSet() call actually stamps on the row (see LOG_DATE declaration above
+  // for why this is separate from which weekday tab is being viewed).
+  const datePicker = document.getElementById('log-date-picker');
+  const backfillNote = document.getElementById('backfill-note');
+  datePicker.value = LOG_DATE;
+  datePicker.max = REAL_TODAY_ISO; // no logging into the future
+  datePicker.addEventListener('change', ()=>{
+    LOG_DATE = datePicker.value || REAL_TODAY_ISO;
+    backfillNote.style.display = (LOG_DATE !== REAL_TODAY_ISO) ? 'inline-block' : 'none';
+    renderDay(); // re-render so "done" badges reflect the newly selected date, not today's
+  });
 
   renderRack();
   renderTips();

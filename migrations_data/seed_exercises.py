@@ -54,7 +54,7 @@ MAIN, WARMUP, STRETCH = Section.main, Section.warmup, Section.stretch
 
 EXERCISES = [
     # --- Legs ---
-    ("Barbell Back Squat", MAIN, "Quads + Glutes", COMPOUND, GYM, INT, [G_STR, G_HYP, G_GEN], 4, 4, 8),
+    ("Barbell Back Squat", MAIN, "Quads + Glutes", COMPOUND, GYM, BEG, [G_STR, G_HYP, G_GEN], 4, 4, 8),
     ("Goblet Squat", MAIN, "Quads + Glutes", COMPOUND, HOME, BEG, [G_STR, G_HYP, G_GEN, G_FAT], 3, 8, 12),
     ("Bodyweight Squat", MAIN, "Quads + Glutes", COMPOUND, BW, BEG, [G_STR, G_HYP, G_GEN, G_FAT, G_END], 3, 12, 20),
     ("Romanian Deadlift", MAIN, "Hamstrings + Glutes", COMPOUND, GYM, INT, [G_STR, G_HYP], 3, 6, 10),
@@ -68,7 +68,7 @@ EXERCISES = [
     ("Calf Raise (Bodyweight)", MAIN, "Calves", ISOLATION, BW, BEG, [G_GEN, G_END], 3, 15, 25),
 
     # --- Chest ---
-    ("Barbell Bench Press", MAIN, "Chest", COMPOUND, GYM, INT, [G_STR, G_HYP], 4, 4, 8),
+    ("Barbell Bench Press", MAIN, "Chest", COMPOUND, GYM, BEG, [G_STR, G_HYP], 4, 4, 8),
     ("Dumbbell Bench Press", MAIN, "Chest", COMPOUND, HOME, BEG, [G_STR, G_HYP, G_GEN], 3, 8, 12),
     ("Push-Up", MAIN, "Chest", COMPOUND, BW, BEG, [G_STR, G_HYP, G_GEN, G_FAT, G_END], 3, 10, 20),
     ("Incline Dumbbell Press", MAIN, "Upper Chest", COMPOUND, HOME, BEG, [G_HYP], 3, 8, 12),
@@ -78,14 +78,14 @@ EXERCISES = [
     # --- Back ---
     ("Pull-Up", MAIN, "Lats", COMPOUND, BW, INT, [G_STR, G_HYP, G_GEN], 3, 5, 10),
     ("Lat Pulldown", MAIN, "Lats", COMPOUND, GYM, BEG, [G_HYP, G_GEN], 3, 8, 12),
-    ("Barbell Row", MAIN, "Mid-Back + Lats", COMPOUND, GYM, INT, [G_STR, G_HYP], 3, 6, 10),
+    ("Barbell Row", MAIN, "Mid-Back + Lats", COMPOUND, GYM, BEG, [G_STR, G_HYP], 3, 6, 10),
     ("Dumbbell Row", MAIN, "Lats + Mid-Back", COMPOUND, HOME, BEG, [G_STR, G_HYP, G_GEN], 3, 8, 12),
     ("Seated Cable Row", MAIN, "Mid-Back", COMPOUND, GYM, BEG, [G_HYP], 3, 8, 12),
     ("Inverted Row", MAIN, "Mid-Back", COMPOUND, BW, BEG, [G_STR, G_HYP, G_GEN, G_FAT], 3, 10, 15),
 
     # --- Shoulders ---
     ("Seated Dumbbell Shoulder Press", MAIN, "Front + Lateral Delts", COMPOUND, HOME, BEG, [G_STR, G_HYP, G_GEN], 3, 6, 10),
-    ("Barbell Overhead Press", MAIN, "Shoulders", COMPOUND, GYM, INT, [G_STR, G_HYP], 4, 4, 8),
+    ("Barbell Overhead Press", MAIN, "Shoulders", COMPOUND, GYM, BEG, [G_STR, G_HYP], 4, 4, 8),
     ("Pike Push-Up", MAIN, "Shoulders", COMPOUND, BW, INT, [G_GEN, G_FAT], 3, 8, 12),
     ("Dumbbell Lateral Raise", MAIN, "Lateral Delts", ISOLATION, HOME, BEG, [G_HYP], 3, 10, 15),
     ("Reverse Pec Deck", MAIN, "Rear Delts", ISOLATION, GYM, BEG, [G_HYP], 3, 10, 15),

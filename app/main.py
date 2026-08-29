@@ -1,7 +1,8 @@
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -75,3 +76,22 @@ def health_check(db: Session = Depends(get_db)):
     """Verifies the app is up AND can reach Postgres — not just that the process is alive."""
     db.execute(text("SELECT 1"))
     return {"status": "ok", "environment": settings.environment}
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_404_handler(request: Request, exc: StarletteHTTPException):
+    """
+    A mistyped URL or stale bookmark used to render raw {"detail":"Not Found"}
+    JSON — looks like a crashed site to anyone who isn't a developer. API
+    clients (/api/*) still get JSON, since that's the correct contract for
+    them; only browser page navigation gets the styled fallback.
+
+    Registered against Starlette's BASE HTTPException, not FastAPI's subclass
+    of it — genuinely unmatched routes (no route pattern matches at all) are
+    raised by Starlette's own router as the base class, so a handler
+    registered only for the FastAPI subclass would silently miss them
+    (caught this via a real failing test, not by inspection).
+    """
+    if exc.status_code == 404 and not request.url.path.startswith("/api"):
+        return templates.TemplateResponse(request, "404.html", status_code=404)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
