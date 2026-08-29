@@ -9,7 +9,7 @@
 <style>
   :root{
     --bg: #17181a; --surface: #1f2022; --surface-2: #26282a; --line: #35373a;
-    --chalk: #f2efe7; --steel: #9aa0a6; --yellow: #e8b23c; --rust: #b0472f; --green: #6f9c6a; --blue: #6a94b0;
+    --chalk: #f2efe7; --steel: #9aa0a6; --accent: #16e0c5; --rust: #b0472f; --green: #6f9c6a; --blue: #6a94b0;
   }
   *{box-sizing:border-box;}
   body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; }
@@ -19,7 +19,7 @@
   .eyebrow{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--steel); margin:0 0 4px; }
   h1{ font-family:'Oswald', sans-serif; font-weight:700; text-transform:uppercase; font-size:24px; margin:0; }
   .nav-link{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--steel); text-decoration:none; border:1px solid var(--line); border-radius:20px; padding:6px 12px; }
-  .nav-link:hover{ border-color:var(--yellow); color:var(--yellow); }
+  .nav-link:hover{ border-color:var(--accent); color:var(--accent); }
   .state-msg{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; color:var(--steel); font-size:14px; }
   .card{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; }
   .card.active{ border-color:var(--green); }
@@ -28,13 +28,14 @@
   .day-row:last-child{ border-bottom:none; }
   .day-row .label{ color:var(--steel); }
   .day-row.rest .label, .day-row.rest .val{ color:var(--steel); font-style:italic; }
-  .btn{ border:none; border-radius:6px; padding:10px 16px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; letter-spacing:.05em; cursor:pointer; }
-  .btn-primary{ background:var(--yellow); color:#1a1a1a; }
+  .btn{ border:none; border-radius:6px; padding:10px 16px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; letter-spacing:.05em; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .btn-primary{ background:var(--accent); color:#1a1a1a; }
   .btn-secondary{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
   .btn:disabled{ background:var(--line); color:var(--steel); cursor:default; }
   .active-tag{ display:inline-block; font-family:'JetBrains Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#1a1a1a; background:var(--green); padding:3px 8px; border-radius:10px; margin-left:8px; }
   .section-head{ margin:24px 0 12px; font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:15px; }
 </style>
+<script src="/static/js/icons.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -92,7 +93,7 @@ function renderOptions(options, activePlan){
       <div class="card active">
         <div class="plan-name">${activePlan.name} <span class="active-tag">Active</span></div>
         ${activePlan.days.map(renderDayRow).join('')}
-        <button class="btn btn-secondary" style="margin-top:12px;" onclick="deactivate()">Switch to classic plan</button>
+        <button class="btn btn-secondary" style="margin-top:12px;" onclick="deactivate()">${icon('arrowLeft',14)} Switch to classic plan</button>
       </div>
     ` : ''}
     <div class="section-head">${activePlan ? 'Generate a new set of options' : 'Choose a personalized plan'}</div>
@@ -101,11 +102,11 @@ function renderOptions(options, activePlan){
         <div class="card">
           <div class="plan-name">${opt.name}</div>
           ${opt.days.map(renderDayRow).join('')}
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="activate('${opt.id}')">Use this plan</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="activate('${opt.id}')">${icon('check',14)} Use this plan</button>
         </div>
       `).join('')}
     </div>
-    <button class="btn btn-secondary" onclick="generate()">Generate 3 new options</button>
+    <button class="btn btn-secondary" onclick="generate()">${icon('refresh',14)} Generate 3 new options</button>
   `;
 }
 
@@ -123,14 +124,14 @@ function renderOptions(options, activePlan){
       <div class="card active">
         <div class="plan-name">${activePlan.name} <span class="active-tag">Active</span></div>
         ${activePlan.days.map(renderDayRow).join('')}
-        <button class="btn btn-secondary" style="margin-top:12px;" onclick="deactivate()">Switch to classic plan</button>
+        <button class="btn btn-secondary" style="margin-top:12px;" onclick="deactivate()">${icon('arrowLeft',14)} Switch to classic plan</button>
       </div>
-      <button class="btn btn-primary" onclick="generate()">Generate new options</button>
+      <button class="btn btn-primary" onclick="generate()">${icon('refresh',14)} Generate new options</button>
     `;
   } else {
     root.innerHTML = `
       <div class="state-msg">You're currently using the classic fixed plan.<br><br>
-      <button class="btn btn-primary" onclick="generate()">Generate a plan based on my goals</button></div>
+      <button class="btn btn-primary" onclick="generate()">${icon('target',14)} Generate a plan based on my goals</button></div>
     `;
   }
 })();

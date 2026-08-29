@@ -14,7 +14,7 @@
     --line: #35373a;
     --chalk: #f2efe7;
     --steel: #9aa0a6;
-    --yellow: #e8b23c;
+    --accent: #16e0c5;
     --rust: #b0472f;
     --green: #6f9c6a;
     --blue: #6a94b0;
@@ -27,7 +27,7 @@
     font-family:'Inter', sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  ::selection{ background:var(--yellow); color:#1a1a1a; }
+  ::selection{ background:var(--accent); color:#1a1a1a; }
 
   .wrap{ max-width:760px; margin:0 auto; padding:20px 16px 90px; }
 
@@ -38,7 +38,7 @@
     color:var(--steel); text-decoration:none; border:1px solid var(--line); border-radius:20px;
     padding:6px 12px; transition:border-color .15s, color .15s; flex:none; white-space:nowrap;
   }
-  .nav-link:hover{ border-color:var(--yellow); color:var(--yellow); }
+  .nav-link:hover{ border-color:var(--accent); color:var(--accent); }
   .eyebrow{
     font-family:'JetBrains Mono', monospace;
     font-size:11px;
@@ -72,11 +72,11 @@
     transition:border-color .15s ease, background .15s ease, transform .1s ease;
   }
   .day-tab:hover{ border-color:#4a4d51; transform:translateY(-1px); }
-  .day-tab.active{ background:var(--surface-2); border-color:var(--yellow); color:var(--chalk); }
+  .day-tab.active{ background:var(--surface-2); border-color:var(--accent); color:var(--chalk); }
   .day-tab .d{ font-family:'Oswald', sans-serif; font-size:12px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
   .plates{ display:flex; justify-content:center; gap:2px; margin-top:6px; height:14px; align-items:flex-end; }
   .plate{ width:4px; background:var(--steel); border-radius:1px; }
-  .day-tab.active .plate{ background:var(--yellow); }
+  .day-tab.active .plate{ background:var(--accent); }
   .day-tab.rest .plate{ background:var(--line); }
 
   .panel-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--line); }
@@ -108,10 +108,11 @@
   .ex-card.done .badge{ background:var(--green); border-color:var(--green); color:#12140f; }
 
   .ex-info{ flex:1; min-width:0; }
-  .ex-name{ font-weight:600; font-size:15px; color:var(--chalk); }
+  .ex-name{ font-weight:600; font-size:15px; color:var(--chalk); display:flex; align-items:center; gap:8px; }
+  .ex-icon{ color:var(--accent); display:inline-flex; }
   .ex-target{ font-size:12px; color:var(--steel); margin-top:2px; }
   .ex-slot-note{ font-size:11px; color:var(--blue); margin-top:2px; font-family:'JetBrains Mono', monospace; }
-  .ex-nums{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--yellow); text-align:right; white-space:nowrap; flex:none; }
+  .ex-nums{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--accent); text-align:right; white-space:nowrap; flex:none; }
   .ex-nums .lbl{ display:block; font-size:9px; color:var(--steel); letter-spacing:.08em; text-transform:uppercase; }
   .chev{ color:var(--steel); flex:none; transition:transform .15s ease; font-size:12px; }
   .ex-card.open .chev{ transform:rotate(180deg); }
@@ -130,7 +131,7 @@
     padding:5px 10px; border-radius:20px; margin:0 6px 6px 0; cursor:pointer;
     transition:border-color .15s, background .15s;
   }
-  .alt-chip:hover{ border-color:var(--yellow); }
+  .alt-chip:hover{ border-color:var(--accent); }
   .alt-chip:active{ transform:scale(.97); }
   .alt-chip.custom{ border-color:var(--blue); }
   .alt-chip .alt-remove{
@@ -138,19 +139,19 @@
   }
   .alt-chip .alt-remove:hover{ color:var(--rust); }
   .alt-chip.add-chip{ background:transparent; border-style:dashed; color:var(--steel); }
-  .alt-chip.add-chip:hover{ color:var(--yellow); border-color:var(--yellow); }
+  .alt-chip.add-chip:hover{ color:var(--accent); border-color:var(--accent); }
 
   .add-alt-form{ display:flex; gap:6px; margin:-6px 0 14px; }
   .add-alt-form input{
     flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
     color:var(--chalk); font-size:13px; padding:8px 10px; min-width:0;
   }
-  .add-alt-form input:focus{ outline:none; border-color:var(--yellow); }
+  .add-alt-form input:focus{ outline:none; border-color:var(--accent); }
   .add-alt-form button{
     border:none; border-radius:6px; padding:0 12px; font-family:'Oswald', sans-serif; font-size:12px;
     text-transform:uppercase; font-weight:600; cursor:pointer; letter-spacing:.04em;
   }
-  .add-alt-form .add-alt-confirm{ background:var(--yellow); color:#1a1a1a; }
+  .add-alt-form .add-alt-confirm{ background:var(--accent); color:#1a1a1a; }
   .add-alt-form .add-alt-cancel{ background:var(--surface-2); color:var(--steel); border:1px solid var(--line); }
 
   .set-rows{ margin-top:16px; }
@@ -161,15 +162,15 @@
     color:var(--chalk); font-family:'JetBrains Mono', monospace; font-size:14px;
     padding:8px 10px; width:100%; min-width:0;
   }
-  .set-row input:focus{ outline:none; border-color:var(--yellow); }
+  .set-row input:focus{ outline:none; border-color:var(--accent); }
   .set-row .x{ color:var(--steel); font-size:12px; flex:none; }
   .set-row.logged input{ border-color:var(--green); color:var(--green); }
 
   .log-btn{
     width:100%; margin-top:6px; padding:11px; border:none; border-radius:6px;
-    background:var(--yellow); color:#1a1a1a; font-family:'Oswald', sans-serif;
+    background:var(--accent); color:#1a1a1a; font-family:'Oswald', sans-serif;
     font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em;
-    cursor:pointer;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .log-btn:disabled{ background:var(--line); color:var(--steel); cursor:not-allowed; }
   .log-status{ font-size:12px; margin-top:8px; text-align:center; min-height:16px; color:var(--steel); }
@@ -181,7 +182,7 @@
   .summary-strip b{ color:var(--chalk); }
 
   .tips-fab{
-    position:fixed; right:16px; bottom:16px; background:var(--yellow); color:#1a1a1a; border:none;
+    position:fixed; right:16px; bottom:16px; background:var(--accent); color:#1a1a1a; border:none;
     font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px;
     letter-spacing:.06em; padding:12px 16px; border-radius:24px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4);
   }
@@ -196,7 +197,7 @@
   .drawer h3{ font-family:'Oswald', sans-serif; text-transform:uppercase; font-size:18px; margin:0 0 14px; }
   .tip-row{ padding:10px 0; border-bottom:1px solid var(--line); }
   .tip-row:last-child{ border-bottom:none; }
-  .tip-cat{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--yellow); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
+  .tip-cat{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
   .tip-rep{ font-size:13px; color:var(--steel); margin-bottom:3px; }
   .tip-text{ font-size:14px; line-height:1.4; }
   .drawer-close{ position:sticky; top:0; float:right; background:none; border:none; color:var(--steel); font-size:20px; cursor:pointer; line-height:1; }
@@ -223,17 +224,17 @@
     width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
     color:var(--chalk); font-size:14px; padding:10px 12px;
   }
-  .auth-field input:focus{ outline:none; border-color:var(--yellow); }
+  .auth-field input:focus{ outline:none; border-color:var(--accent); }
   .auth-submit{
     width:100%; margin-top:6px; padding:11px; border:none; border-radius:6px;
-    background:var(--yellow); color:#1a1a1a; font-family:'Oswald', sans-serif;
+    background:var(--accent); color:#1a1a1a; font-family:'Oswald', sans-serif;
     font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
   }
   .auth-submit:disabled{ background:var(--line); color:var(--steel); cursor:default; }
   .auth-error{ color:var(--rust); font-size:12.5px; margin-top:10px; min-height:16px; text-align:center; }
   .auth-links{ text-align:center; margin-top:14px; font-size:12px; }
   .auth-links a{ color:var(--steel); text-decoration:none; }
-  .auth-links a:hover{ color:var(--yellow); }
+  .auth-links a:hover{ color:var(--accent); }
   .auth-links .sep{ color:var(--line); margin:0 6px; }
 
   .user-badge{ display:flex; align-items:center; gap:8px; }
@@ -252,6 +253,7 @@
     .set-row .set-n{ width:76px; }
   }
 </style>
+<script src="/static/js/icons.js"></script>
 </head>
 <body>
 
@@ -774,6 +776,20 @@ function askConfirm(message){
 }
 
 // ---------------- Main exercise card renderer ----------------
+// Guesses an icon category from the free-text muscle group label — works
+// uniformly for both the classic plan (always had only text labels) and
+// generated plans (which do carry a real split_category, but flattening it
+// through here avoids threading a second field through the whole DATA shape
+// for one cosmetic lookup).
+function guessIconCategory(muscleGroupText){
+  const t = (muscleGroupText || '').toLowerCase();
+  if(/quad|ham|glute|calv|leg/.test(t)) return 'legs';
+  if(/chest|delt|shoulder|tricep/.test(t)) return 'push';
+  if(/lat|back|row|bicep|rhomboid/.test(t)) return 'pull';
+  if(/ab|core|oblique/.test(t)) return 'core';
+  return 'dumbbell';
+}
+
 function renderExerciseCard(ex, day, i){
   const exId = `${day.key}-${i}`;
   const card = document.createElement('div');
@@ -801,7 +817,7 @@ function renderExerciseCard(ex, day, i){
     <div class="ex-main">
       <div class="badge" data-role="badge">${i+1}</div>
       <div class="ex-info">
-        <div class="ex-name" data-role="ex-name">${ex.n}</div>
+        <div class="ex-name" data-role="ex-name"><span class="ex-icon">${icon(guessIconCategory(ex.t), 16)}</span>${ex.n}</div>
         <div class="ex-target">${ex.t}</div>
         <div class="ex-slot-note" data-role="ex-slot-note" style="display:${ex.n !== ex.slot ? 'block' : 'none'}">Logged as: ${ex.slot}</div>
       </div>
@@ -821,7 +837,7 @@ function renderExerciseCard(ex, day, i){
       </div>
       <div class="log-lbl">Log today's sets</div>
       <div class="set-rows" data-role="set-rows">${setRowsHtml}</div>
-      <button class="log-btn" data-role="log-btn" disabled>Log workout</button>
+      <button class="log-btn" data-role="log-btn" disabled>${icon('check',14)} Log workout</button>
       <div class="log-hint" data-role="log-hint">Fill in weight + reps for all ${ex.sets} sets to enable logging</div>
       <div class="log-status" data-role="log-status"></div>
     </div></div>
@@ -998,13 +1014,13 @@ function renderAuxCard(exDef, section, dayKey){
     <div class="ex-main">
       <div class="badge" data-role="badge">•</div>
       <div class="ex-info">
-        <div class="ex-name">${exDef.n}</div>
+        <div class="ex-name"><span class="ex-icon">${icon(section === 'Warmup' ? 'warmup' : 'stretch', 16)}</span>${exDef.n}</div>
       </div>
       <div class="chev">▾</div>
     </div>
     <div class="ex-body"><div class="ex-body-inner">
       <div class="set-rows" data-role="set-rows">${fieldRows}</div>
-      <button class="log-btn" data-role="log-btn" disabled>Log ${exDef.n}</button>
+      <button class="log-btn" data-role="log-btn" disabled>${icon('check',14)} Log ${exDef.n}</button>
       <div class="log-hint" data-role="log-hint">Fill in all fields to enable logging</div>
       <div class="log-status" data-role="log-status"></div>
     </div></div>

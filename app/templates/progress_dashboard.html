@@ -31,7 +31,7 @@
     --line: #35373a;
     --chalk: #f2efe7;
     --steel: #9aa0a6;
-    --yellow: #e8b23c;
+    --accent: #16e0c5;
     --rust: #b0472f;
     --green: #6f9c6a;
     --blue: #6a94b0;
@@ -49,7 +49,7 @@
     color:var(--steel); text-decoration:none; border:1px solid var(--line); border-radius:20px;
     padding:6px 12px; transition:border-color .15s, color .15s; flex:none; white-space:nowrap;
   }
-  .nav-link:hover{ border-color:var(--yellow); color:var(--yellow); }
+  .nav-link:hover{ border-color:var(--accent); color:var(--accent); }
 
   .state-msg{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; color:var(--steel); font-size:14px; }
   .state-msg b{ color:var(--chalk); }
@@ -63,7 +63,7 @@
     border-radius:20px; cursor:pointer; transition:all .15s ease;
   }
   .tab-btn:hover{ border-color:#4a4d51; }
-  .tab-btn.active{ background:var(--yellow); border-color:var(--yellow); color:#1a1a1a; }
+  .tab-btn.active{ background:var(--accent); border-color:var(--accent); color:#1a1a1a; }
 
   .range-pills{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:3px; }
   .range-pill{
@@ -87,36 +87,36 @@
     background:transparent; border:none; color:var(--steel); font-family:'JetBrains Mono', monospace;
     font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:6px 10px; border-radius:13px; cursor:pointer;
   }
-  .metric-toggle button.active{ background:var(--yellow); color:#1a1a1a; }
+  .metric-toggle button.active{ background:var(--accent); color:#1a1a1a; }
 
   .checkbox-lbl{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--steel); cursor:pointer; user-select:none; }
-  .checkbox-lbl input{ accent-color:var(--yellow); }
+  .checkbox-lbl input{ accent-color:var(--accent); }
 
   .card{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; }
   .chart-wrap{ position:relative; height:260px; }
   .chart-wrap.small{ height:220px; }
   .chart-note{ font-size:11px; color:var(--steel); margin-top:10px; text-align:center; }
-  .chart-note .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; border:2px solid var(--yellow); background:transparent; vertical-align:middle; margin:0 4px; }
+  .chart-note .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; border:2px solid var(--accent); background:transparent; vertical-align:middle; margin:0 4px; }
 
   .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:14px; }
 
   .pr-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; }
   .pr-card{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; }
-  .pr-card.fresh{ border-color:var(--yellow); }
+  .pr-card.fresh{ border-color:var(--accent); }
   .pr-ex{ font-weight:600; font-size:14px; margin-bottom:6px; }
-  .pr-val{ font-family:'JetBrains Mono', monospace; font-size:22px; color:var(--yellow); }
+  .pr-val{ font-family:'JetBrains Mono', monospace; font-size:22px; color:var(--accent); }
   .pr-val span{ font-size:12px; color:var(--steel); margin-left:4px; }
   .pr-date{ font-size:11px; color:var(--steel); margin-top:4px; }
   .pr-tag{
     display:inline-block; margin-top:8px; font-family:'JetBrains Mono', monospace;
     font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#1a1a1a;
-    background:var(--yellow); padding:3px 8px; border-radius:10px;
+    background:var(--accent); padding:3px 8px; border-radius:10px;
   }
   .pr-tag.sub{ background:var(--blue); margin-left:4px; }
 
   .summary-tiles{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:8px; }
   .tile{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; }
-  .tile .n{ font-family:'JetBrains Mono', monospace; font-size:24px; color:var(--yellow); }
+  .tile .n{ font-family:'JetBrains Mono', monospace; font-size:24px; color:var(--accent); }
   .tile .l{ font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.06em; margin-top:4px; }
 
   /* ---- Consistency calendar ---- */
@@ -151,17 +151,17 @@
     width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
     color:var(--chalk); font-size:14px; padding:10px 12px;
   }
-  .auth-field input:focus{ outline:none; border-color:var(--yellow); }
+  .auth-field input:focus{ outline:none; border-color:var(--accent); }
   .auth-submit{
     width:100%; margin-top:6px; padding:11px; border:none; border-radius:6px;
-    background:var(--yellow); color:#1a1a1a; font-family:'Oswald', sans-serif;
+    background:var(--accent); color:#1a1a1a; font-family:'Oswald', sans-serif;
     font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
   }
   .auth-submit:disabled{ background:var(--line); color:var(--steel); cursor:default; }
   .auth-error{ color:var(--rust); font-size:12.5px; margin-top:10px; min-height:16px; text-align:center; }
   .auth-links{ text-align:center; margin-top:14px; font-size:12px; }
   .auth-links a{ color:var(--steel); text-decoration:none; }
-  .auth-links a:hover{ color:var(--yellow); }
+  .auth-links a:hover{ color:var(--accent); }
   .auth-links .sep{ color:var(--line); margin:0 6px; }
 
   .logout-btn{
@@ -177,6 +177,7 @@
     .header-top h1{ order:3; width:100%; margin-top:4px; }
   }
 </style>
+<script src="/static/js/icons.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -236,7 +237,7 @@
 // Same origin as the rest of the app — relative paths, no BASE_URL, no API key.
 
 const root = document.getElementById('root');
-const CHART_COLORS = ['#e8b23c', '#6f9c6a', '#b0472f', '#8aa8c9', '#c98ac0', '#9aa0a6', '#d99a4e', '#6a94b0'];
+const CHART_COLORS = ['#16e0c5', '#6f9c6a', '#b0472f', '#8aa8c9', '#c98ac0', '#9aa0a6', '#d99a4e', '#6a94b0'];
 
 // Chart.defaults.* is set inside load(), once we know the fetch succeeded and
 // the Chart.js CDN script has definitely finished loading — not here at parse time.
@@ -586,8 +587,8 @@ function renderOverview(target){
 
   target.innerHTML = `
     ${USER_GOAL ? `
-    <div class="card" style="margin-bottom:16px; border-color:var(--yellow);">
-      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--yellow); margin-bottom:4px;">Your goal: ${GOAL_COPY[USER_GOAL]?.label || USER_GOAL}</div>
+    <div class="card" style="margin-bottom:16px; border-color:var(--accent);">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:4px;">Your goal: ${GOAL_COPY[USER_GOAL]?.label || USER_GOAL}</div>
       <div style="font-size:13px; color:var(--steel);">${GOAL_COPY[USER_GOAL]?.blurb || ''}</div>
     </div>` : ''}
     <div class="summary-tiles">
@@ -773,13 +774,13 @@ function renderMain(target){
       data:{ labels:dates, datasets:[{
         label: `${exercise} — ${yLabel}`,
         data: vals,
-        borderColor:'#e8b23c',
+        borderColor:'#16e0c5',
         backgroundColor:'rgba(232,178,60,.15)',
         tension:.25,
         fill:true,
         pointRadius:5,
-        pointBackgroundColor: dates.map((d,i)=> swapped[i] ? 'transparent' : '#e8b23c'),
-        pointBorderColor: '#e8b23c',
+        pointBackgroundColor: dates.map((d,i)=> swapped[i] ? 'transparent' : '#16e0c5'),
+        pointBorderColor: '#16e0c5',
         pointBorderWidth: 2
       }]},
       options:{
