@@ -245,6 +245,22 @@ const CHART_COLORS = ['#16e0c5', '#6f9c6a', '#b0472f', '#8aa8c9', '#c98ac0', '#9
 let ALL_ROWS = [];
 let USER_GOAL = null;
 
+// Rolls up the free-text muscle_group label (which fragments into near-
+// duplicates like "Upper Chest" / "Overall Chest" / "Chest Isolation")
+// into a stable set of ~6-8 categories for charting — the granular label
+// still exists on the row itself, this only affects chart grouping.
+function normalizeMuscleGroup(text){
+  const t = (text || '').toLowerCase();
+  if(/quad|ham|glute|calv|leg/.test(t)) return 'Legs';
+  if(/chest/.test(t)) return 'Chest';
+  if(/lat|back|row|rhomboid/.test(t)) return 'Back';
+  if(/delt|shoulder/.test(t)) return 'Shoulders';
+  if(/bicep|tricep|arm|brachial/.test(t)) return 'Arms';
+  if(/ab|core/.test(t)) return 'Core';
+  if(/full body/.test(t)) return 'Full Body';
+  return 'Other';
+}
+
 const GOAL_COPY = {
   strength: { label: "Strength", blurb: "Tracking top-set weight and estimated 1RM — the numbers that matter most for pure strength.", defaultMetric: "1rm" },
   hypertrophy: { label: "Hypertrophy", blurb: "Tracking total volume — the main driver of muscle growth over time.", defaultMetric: "volume" },
@@ -561,7 +577,7 @@ function renderOverview(target){
   // muscle group volume share (main lifts only — that's the only section with a muscle group)
   const mgMap = {};
   mainRows.forEach(r=>{
-    const mg = r.muscleGroup || 'Other';
+    const mg = normalizeMuscleGroup(r.muscleGroup);
     mgMap[mg] = (mgMap[mg]||0) + r.weight*r.reps;
   });
   const mgLabels = Object.keys(mgMap);
@@ -657,7 +673,7 @@ function renderMain(target){
     const vol = r.weight*r.reps;
     weekMap[wk] = (weekMap[wk]||0) + vol;
     weekMgMap[wk] = weekMgMap[wk] || {};
-    const mg = r.muscleGroup || 'Other';
+    const mg = normalizeMuscleGroup(r.muscleGroup);
     weekMgMap[wk][mg] = (weekMgMap[wk][mg]||0) + vol;
   });
   const weekLabels = Object.keys(weekMap).sort();

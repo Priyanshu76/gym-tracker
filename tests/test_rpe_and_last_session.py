@@ -120,3 +120,36 @@ def test_last_session_scoped_by_exercise_name_and_user():
 def test_last_session_requires_authentication():
     anon = TestClient(app)
     assert anon.get("/api/workout-logs/last", params={"exercise": "Barbell Back Squat"}).status_code == 401
+
+
+def test_csv_export_contains_logged_data():
+    client = _logged_in_client("exportuser")
+    client.post("/api/workout-logs", json={
+        "workout_date": "2026-08-29", "day_name": "Saturday", "section": "Main",
+        "exercise": "Barbell Back Squat", "muscle_group": "Legs", "set_number": 1,
+        "weight_kg": 100, "reps": 5, "rpe": 8,
+    })
+    r = client.get("/api/workout-logs/export")
+    assert r.status_code == 200
+    assert "text/csv" in r.headers["content-type"]
+    assert "attachment" in r.headers["content-disposition"]
+    body = r.text
+    assert "Barbell Back Squat" in body
+    assert "100" in body
+    assert "date,day,section,exercise" in body  # header row present
+
+
+def test_csv_export_requires_authentication():
+    anon = TestClient(app)
+    assert anon.get("/api/workout-logs/export").status_code == 401
+
+
+def test_csv_export_scoped_to_current_user():
+    alice = _logged_in_client("exportalice")
+    bob = _logged_in_client("exportbob")
+    alice.post("/api/workout-logs", json={
+        "workout_date": "2026-08-29", "day_name": "Saturday", "section": "Main",
+        "exercise": "Barbell Back Squat", "set_number": 1, "weight_kg": 100, "reps": 5,
+    })
+    bob_csv = bob.get("/api/workout-logs/export").text
+    assert "Barbell Back Squat" not in bob_csv

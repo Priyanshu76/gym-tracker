@@ -404,6 +404,7 @@ function buildShell(){
       <select id="mg-filter"><option value="">All muscle groups</option>${muscleGroups.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
       <input type="text" id="search-input" placeholder="Search exercise name…">
       <button class="sort-btn" id="sort-btn">Newest first ↓</button>
+      <button class="sort-btn" id="export-btn">${icon('list',12)} Export CSV</button>
       <span class="filter-count" id="filter-count"></span>
     </div>
     <div class="table-wrap">
@@ -447,6 +448,24 @@ function buildShell(){
     STATE.sortDir = STATE.sortDir === 'desc' ? 'asc' : 'desc';
     document.getElementById('sort-btn').textContent = STATE.sortDir === 'desc' ? 'Newest first ↓' : 'Oldest first ↑';
     renderTable();
+  });
+
+  document.getElementById('export-btn').addEventListener('click', async ()=>{
+    try{
+      const res = await authFetch('/api/workout-logs/export');
+      if(!res.ok) throw new Error('export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workout_history.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }catch(e){
+      alert('Could not export — check your connection and try again.');
+    }
   });
 
   STATE.section = 'all';

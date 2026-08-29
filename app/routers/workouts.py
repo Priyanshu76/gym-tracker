@@ -52,6 +52,45 @@ def get_progress(
     )
 
 
+@router.get("/workout-logs/export")
+def export_workout_logs_csv(
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """CSV export of full workout history — for backup or sharing with a
+    coach, explicitly missing per the platform analysis."""
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+
+    logs = (
+        db.query(WorkoutLog)
+        .filter(WorkoutLog.user_id == user.id)
+        .order_by(WorkoutLog.logged_at)
+        .all()
+    )
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "date", "day", "section", "exercise", "performed_as", "muscle_group",
+        "set_number", "weight_kg", "reps", "rpe", "set_type", "metrics",
+    ])
+    for log in logs:
+        writer.writerow([
+            log.workout_date, log.day_name, log.section.value, log.exercise,
+            log.performed_as or "", log.muscle_group or "", log.set_number or "",
+            log.weight_kg or "", log.reps or "", log.rpe or "", log.set_type.value,
+            log.metrics or "",
+        ])
+    buffer.seek(0)
+    return StreamingResponse(
+        iter([buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=workout_history.csv"},
+    )
+
+
 @router.get("/workout-logs/last", response_model=list[WorkoutLogOut])
 def get_last_session_for_exercise(
     exercise: str,

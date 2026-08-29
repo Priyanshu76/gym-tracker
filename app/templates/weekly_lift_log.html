@@ -1045,6 +1045,24 @@ function renderExerciseCard(ex, day, i){
     inp.addEventListener('input', refreshLogBtnState);
   });
 
+  // Auto-advance weight -> reps -> RPE -> next row, and submit on Enter from
+  // the last field — sweaty-thumbs, one-handed gym-floor logging ergonomics.
+  const setRowEls = [...setRowsEl.querySelectorAll('.set-row')];
+  setRowEls.forEach((rowEl, rowIdx)=>{
+    const wInput = rowEl.querySelector('.w-input');
+    const rInput = rowEl.querySelector('.r-input');
+    const rpeInput = rowEl.querySelector('.rpe-input');
+    wInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); rInput.focus(); } });
+    rInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); rpeInput.focus(); } });
+    rpeInput.addEventListener('keydown', e=>{
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      const nextRow = setRowEls[rowIdx+1];
+      if(nextRow){ nextRow.querySelector('.w-input').focus(); }
+      else if(!logBtn.disabled){ logBtn.click(); }
+    });
+  });
+
   // ---- Feature 1: click a swap chip to replace the main exercise ----
   altChipsEl.addEventListener('click', async (e)=>{
     const removeBtn = e.target.closest('.alt-remove');

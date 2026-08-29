@@ -23,3 +23,23 @@ def test_log_page_includes_rest_timer():
     r = client.get("/")
     assert "startRestTimer" in r.text
     assert "rest-timer" in r.text
+
+
+def test_log_page_has_enter_key_ergonomics():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "keydown" in r.text
+    assert "nextRow" in r.text
+
+
+def test_workout_logs_page_has_export_button():
+    client = TestClient(app)
+    r = client.get("/logs")
+    assert 'id="export-btn"' in r.text
+    assert "/api/workout-logs/export" in r.text
+
+
+def test_dashboard_normalizes_muscle_group_taxonomy():
+    client = TestClient(app)
+    r = client.get("/dashboard")
+    assert "normalizeMuscleGroup" in r.text
