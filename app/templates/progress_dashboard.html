@@ -242,6 +242,15 @@ const CHART_COLORS = ['#e8b23c', '#6f9c6a', '#b0472f', '#8aa8c9', '#c98ac0', '#9
 // the Chart.js CDN script has definitely finished loading — not here at parse time.
 
 let ALL_ROWS = [];
+let USER_GOAL = null;
+
+const GOAL_COPY = {
+  strength: { label: "Strength", blurb: "Tracking top-set weight and estimated 1RM — the numbers that matter most for pure strength.", defaultMetric: "1rm" },
+  hypertrophy: { label: "Hypertrophy", blurb: "Tracking total volume — the main driver of muscle growth over time.", defaultMetric: "volume" },
+  fat_loss: { label: "Fat Loss", blurb: "Tracking training consistency and volume — staying active is what matters most here.", defaultMetric: "volume" },
+  endurance: { label: "Endurance", blurb: "Tracking consistency and session frequency over raw weight moved.", defaultMetric: "volume" },
+  general_fitness: { label: "General Fitness", blurb: "A balanced view across strength, volume, and consistency.", defaultMetric: "top" },
+};
 let STATE = { tab: 'overview', range: 'all' };
 let charts = {}; // keep references so we can .destroy() before redraw
 
@@ -428,6 +437,14 @@ async function load(){
   if(!auth.has_profile){ location.href = '/onboarding'; return; }
   document.getElementById('logout-btn').style.display = 'inline-block';
 
+  try{
+    const profileRes = await authFetch('/api/profile');
+    if(profileRes.ok){
+      const profile = await profileRes.json();
+      if(profile) USER_GOAL = profile.goal;
+    }
+  }catch(e){}
+
   if(typeof Chart === 'undefined'){
     root.innerHTML = `<div class="state-msg">Charting library failed to initialize.<br><b>Try a hard refresh (Ctrl/Cmd+Shift+R)</b> — if this persists, open the browser console (F12) and check for errors.</div>`;
     return;
@@ -568,6 +585,11 @@ function renderOverview(target){
   }
 
   target.innerHTML = `
+    ${USER_GOAL ? `
+    <div class="card" style="margin-bottom:16px; border-color:var(--yellow);">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--yellow); margin-bottom:4px;">Your goal: ${GOAL_COPY[USER_GOAL]?.label || USER_GOAL}</div>
+      <div style="font-size:13px; color:var(--steel);">${GOAL_COPY[USER_GOAL]?.blurb || ''}</div>
+    </div>` : ''}
     <div class="summary-tiles">
       <div class="tile"><div class="n" id="t-sets">0</div><div class="l">Sets logged</div></div>
       <div class="tile"><div class="n" id="t-days">0</div><div class="l">Days trained</div></div>
@@ -666,10 +688,10 @@ function renderMain(target){
           <select id="ex-select"></select>
         </div>
       </div>
-      <div class="metric-toggle" style="margin-bottom:10px;">
-        <button data-metric="top" class="active">Top set (kg)</button>
-        <button data-metric="1rm">Est. 1RM</button>
-        <button data-metric="volume">Volume</button>
+      <div class="metric-toggle" style="margin-bottom:10px;" id="metric-toggle">
+        <button data-metric="top" class="${(GOAL_COPY[USER_GOAL]?.defaultMetric || 'top')==='top'?'active':''}">Top set (kg)</button>
+        <button data-metric="1rm" class="${(GOAL_COPY[USER_GOAL]?.defaultMetric)==='1rm'?'active':''}">Est. 1RM</button>
+        <button data-metric="volume" class="${(GOAL_COPY[USER_GOAL]?.defaultMetric)==='volume'?'active':''}">Volume</button>
       </div>
       <div class="card"><div class="chart-wrap"><canvas id="progressChart"></canvas></div></div>
       <div class="chart-note"><span class="dot"></span>Hollow point = a substituted exercise was used that day (see "Logged as" on the log page)</div>
@@ -712,7 +734,7 @@ function renderMain(target){
   mgFilter.addEventListener('change', ()=>{ populateExSelect(mgFilter.value); drawProgress(exSelect.value); });
   exSelect.addEventListener('change', ()=> drawProgress(exSelect.value));
 
-  let currentMetric = 'top';
+  let currentMetric = GOAL_COPY[USER_GOAL]?.defaultMetric || 'top';
   document.querySelectorAll('.metric-toggle button').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.metric-toggle button').forEach(b=>b.classList.remove('active'));
