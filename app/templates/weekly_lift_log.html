@@ -263,6 +263,7 @@
     </p>
     <div class="header-top">
       <h1>Weekly Lift Log</h1>
+      <a class="nav-link" href="/plans" id="plan-mode-label">My Plan</a>
       <a class="nav-link" href="/profile">Profile</a>
       <a class="nav-link" href="/dashboard">Dashboard →</a>
     </div>
@@ -342,7 +343,12 @@
 // This page is now served by the FastAPI app itself, so API calls use
 // relative paths (same origin) — no BASE_URL, no API key, ever.
 
-const DATA = [
+// This is the classic fixed plan — kept exactly as-is for users who prefer
+// it. If the user has activated a generated plan instead, init() below
+// replaces DATA with a transformed version of that plan, and every existing
+// exercise-card / swap / logging function keeps working unchanged, since
+// they all just read whatever DATA currently holds.
+const CLASSIC_DATA = [
   { key:'mon', name:'Monday', groups:'Legs', rest:false, exercises:[
     {n:'Barbell Back Squat', t:'Quads + Glutes', sets:3, reps:'6–10', alts:['Hack Squat','Smith Machine Squat','Bulgarian Split Squat']},
     {n:'Romanian Deadlift', t:'Hamstrings + Glutes', sets:3, reps:'8–12', alts:['Seated Leg Curl','Lying Leg Curl']},
@@ -464,12 +470,38 @@ const TIPS = [
 // also freeze the original "slot" name — this is what gets logged as Exercise in the sheet,
 // regardless of which alternative is currently swapped in, so progress history for a given
 // slot (e.g. "Barbell Back Squat") never fragments across substitutions.
-DATA.forEach(day=>{
+CLASSIC_DATA.forEach(day=>{
   day.exercises.forEach(ex=>{
     ex.alts = ex.alts.map(a => (typeof a === 'string') ? {name:a, custom:false, id:null} : a);
     ex.slot = ex.n; // immutable original slot name
   });
 });
+
+// DATA is what every render/logging function actually reads. It defaults to
+// the classic plan and gets replaced with a transformed generated plan in
+// init() below, if the user has one active — nothing else in this file
+// needs to know or care which one it's looking at.
+let DATA = CLASSIC_DATA;
+
+const JS_DAY_KEYS = ['mon','tue','wed','thu','fri','sat','sun']; // matches generator's day_index 0-6 (Monday-first)
+
+function transformGeneratedPlan(plan){
+  return plan.days.map(day => ({
+    key: JS_DAY_KEYS[day.day_index], // uses the actual day_index field, not array position —
+                                       // safe even if the API ever omits/reorders days
+    name: day.day_name,
+    groups: day.split_label,
+    rest: day.is_rest,
+    exercises: day.exercises.map(ex => ({
+      n: ex.name,
+      slot: ex.name, // no swap history to preserve for a freshly generated plan — slot starts as itself
+      t: ex.muscle_group || '',
+      sets: ex.sets,
+      reps: `${ex.reps_low}–${ex.reps_high}`,
+      alts: [], // generated-plan exercises don't carry curated alternatives; "+ Add" still works
+    })),
+  }));
+}
 
 const rackEl = document.getElementById('rack');
 const contentEl = document.getElementById('content');
@@ -1106,6 +1138,18 @@ drawerBg.addEventListener('click', closeDrawer);
   // server is reachable and the session is valid, no separate ping needed.
   document.getElementById('conn-dot').className = 'conn-dot ok';
   document.getElementById('conn-text').textContent = 'connected';
+
+  // If the user has activated a generated plan, use it instead of the classic one.
+  try{
+    const planRes = await fetch('/api/plans/active');
+    if(planRes.ok){
+      const activePlan = await planRes.json();
+      if(activePlan){
+        DATA = transformGeneratedPlan(activePlan);
+        document.getElementById('plan-mode-label').textContent = `Using: ${activePlan.name}`;
+      }
+    }
+  }catch(e){}
 
   renderRack();
   renderTips();

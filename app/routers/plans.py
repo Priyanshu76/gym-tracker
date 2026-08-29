@@ -93,6 +93,15 @@ def get_active_plan(user: User = Depends(get_current_user), db: DBSession = Depe
     return _plan_to_detail(plan) if plan else None
 
 
+@router.patch("/deactivate", response_model=dict)
+def deactivate_current_plan(user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+    """Reverts to the classic fixed plan — the log page falls back to it
+    whenever GET /api/plans/active returns null."""
+    db.query(WorkoutPlan).filter(WorkoutPlan.user_id == user.id, WorkoutPlan.is_active.is_(True)).update({"is_active": False})
+    db.commit()
+    return {"success": True}
+
+
 @router.patch("/{plan_id}/activate", response_model=PlanDetailOut)
 def activate_plan(plan_id: uuid.UUID, user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
     plan = db.query(WorkoutPlan).filter(WorkoutPlan.id == plan_id, WorkoutPlan.user_id == user.id).first()
