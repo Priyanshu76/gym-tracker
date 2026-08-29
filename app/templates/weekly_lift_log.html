@@ -521,13 +521,27 @@ const STRETCH_EXERCISES = [
 ];
 
 const TIPS = [
-  {cat:'Compound exercises', rep:'6–10 or 8–12 reps', text:'Keep about 1–3 reps in reserve (RIR).'},
-  {cat:'Isolation exercises', rep:'10–15 reps', text:'Keep about 0–2 RIR; occasional failure is acceptable on the final set.'},
-  {cat:'Calves', rep:'10–20 reps', text:'Use controlled range of motion.'},
-  {cat:'Abs', rep:'8–20 reps', text:'Prioritize controlled reps rather than momentum.'},
-  {cat:'Progression', rep:'', text:'Keep primary exercises stable for 6–8 weeks and progressively add reps/weight.'},
-  {cat:'Recovery', rep:'', text:'Sunday is the primary rest day; monitor fatigue because arms receive substantial direct and indirect volume.'},
+  {cat:'Compound exercises', rep:'6–10 or 8–12 reps', text:'Keep about 1–3 reps in reserve (RIR).', goals:['strength','hypertrophy','general_fitness']},
+  {cat:'Isolation exercises', rep:'10–15 reps', text:'Keep about 0–2 RIR; occasional failure is acceptable on the final set.', goals:['hypertrophy']},
+  {cat:'Calves', rep:'10–20 reps', text:'Use controlled range of motion.', goals:[]},
+  {cat:'Abs', rep:'8–20 reps', text:'Prioritize controlled reps rather than momentum.', goals:[]},
+  {cat:'Progression', rep:'', text:'Keep primary exercises stable for 6–8 weeks and progressively add reps/weight.', goals:[]},
+  {cat:'Recovery', rep:'', text:'Sunday is the primary rest day; monitor fatigue because arms receive substantial direct and indirect volume.', goals:[]},
+  {cat:'Strength focus', rep:'4–8 reps, 3–5 min rest', text:'Prioritize the big compound lifts and chase heavier weight at the same rep target before adding more sets.', goals:['strength']},
+  {cat:'Hypertrophy focus', rep:'8–15 reps, 60–90s rest', text:'Volume (sets × reps × weight) drives growth more than any single heavy set — consistency across the week matters most.', goals:['hypertrophy']},
+  {cat:'Fat loss focus', rep:'', text:'Keep lifting heavy enough to preserve muscle — the deficit does the fat loss, training just protects what you have.', goals:['fat_loss']},
+  {cat:'Endurance focus', rep:'15+ reps or timed', text:'Shorter rest periods (30–60s) and higher rep ranges build the muscular endurance this goal is about.', goals:['endurance']},
 ];
+
+// Tips tagged with the user's specific goal are shown first, followed by
+// universal ones (empty goals array). Ties the previously-static Guidelines
+// content to whatever the user actually said their goal is.
+function renderTipsForGoal(goal){
+  const relevant = TIPS.filter(t => t.goals && t.goals.includes(goal));
+  const universal = TIPS.filter(t => !t.goals || t.goals.length === 0);
+  const otherGoalSpecific = TIPS.filter(t => t.goals && t.goals.length && !t.goals.includes(goal));
+  return [...relevant, ...universal, ...otherGoalSpecific];
+}
 
 // normalize every exercise's alts array from plain strings into objects: {name, custom:false, id:null}
 // also freeze the original "slot" name — this is what gets logged as Exercise in the sheet,
