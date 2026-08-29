@@ -9,3 +9,4 @@ from app.models.session import Session  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.user_profile import UserProfile  # noqa: F401
 from app.models.workout_log import WorkoutLog  # noqa: F401
+from app.models.workout_plan import PlanDay, PlanExercise, WorkoutPlan  # noqa: F401

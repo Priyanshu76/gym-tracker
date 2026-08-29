@@ -21,12 +21,13 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 # Routers get included here as each migration phase lands.
-from app.routers import auth, admin, workouts, exercises, profile
+from app.routers import auth, admin, workouts, exercises, profile, plans
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(workouts.router)
 app.include_router(exercises.router)
 app.include_router(profile.router)
+app.include_router(plans.router)
 
 
 @app.get("/", response_class=HTMLResponse)
