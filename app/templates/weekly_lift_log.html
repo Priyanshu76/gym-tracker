@@ -263,6 +263,7 @@
     </p>
     <div class="header-top">
       <h1>Weekly Lift Log</h1>
+      <a class="nav-link" href="/profile">Profile</a>
       <a class="nav-link" href="/dashboard">Dashboard →</a>
     </div>
   </header>
@@ -1094,6 +1095,10 @@ drawerBg.addEventListener('click', closeDrawer);
 // ---------------- Boot sequence ----------------
 (async function init(){
   CURRENT_USER = await ensureAuthed(); // shows the login overlay and waits, if not already logged in
+  if(!CURRENT_USER.has_profile){
+    location.href = '/onboarding';
+    return;
+  }
   document.getElementById('user-who').textContent = CURRENT_USER.display_name || '';
   document.getElementById('logout-btn').style.display = 'inline-block';
 

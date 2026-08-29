@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Set up your profile — Gym Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #17181a; --surface: #1f2022; --surface-2: #26282a; --line: #35373a;
+    --chalk: #f2efe7; --steel: #9aa0a6; --yellow: #e8b23c; --rust: #b0472f; --green: #6f9c6a;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased;
+        min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .box{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:32px 28px; max-width:460px; width:100%; }
+  .eyebrow{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--steel); margin:0 0 4px; }
+  h1{ font-family:'Oswald', sans-serif; font-weight:700; text-transform:uppercase; font-size:22px; margin:0 0 6px; }
+  .sub{ font-size:13.5px; color:var(--steel); margin:0 0 22px; line-height:1.5; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; font-family:'JetBrains Mono', monospace; }
+  .field input, .field select{ width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:14px; padding:10px 12px; font-family:'Inter', sans-serif; }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--yellow); }
+  .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .submit-btn{
+    width:100%; margin-top:8px; padding:12px; border:none; border-radius:6px; background:var(--yellow); color:#1a1a1a;
+    font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
+  }
+  .submit-btn:disabled{ background:var(--line); color:var(--steel); cursor:default; }
+  .msg{ font-size:13px; margin-top:14px; text-align:center; min-height:16px; }
+  .msg.err{ color:var(--rust); }
+  .msg.ok{ color:var(--green); }
+</style>
+</head>
+<body>
+<div class="box">
+  <p class="eyebrow">Gym Tracker</p>
+  <h1 id="page-title">Tell us about your goals</h1>
+  <p class="sub" id="page-sub">This shapes the workout plans we generate for you — you can change any of it later from your profile.</p>
+
+  <form id="profile-form">
+    <div class="field">
+      <label for="goal">Primary goal</label>
+      <select id="goal" required>
+        <option value="strength">Strength</option>
+        <option value="hypertrophy">Hypertrophy (muscle growth)</option>
+        <option value="fat_loss">Fat loss</option>
+        <option value="endurance">Endurance</option>
+        <option value="general_fitness">General fitness</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="experience_level">Experience level</label>
+      <select id="experience_level" required>
+        <option value="beginner">Beginner (0-1 year training)</option>
+        <option value="intermediate">Intermediate (1-3 years)</option>
+        <option value="advanced">Advanced (3+ years)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="equipment_access">Equipment access</label>
+      <select id="equipment_access" required>
+        <option value="full_gym">Full gym (barbells, machines, everything)</option>
+        <option value="home_basic">Home — dumbbells/bands only</option>
+        <option value="bodyweight_only">Bodyweight only</option>
+      </select>
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="height_cm">Height (cm)</label>
+        <input type="number" id="height_cm" min="100" max="250" step="0.1" required>
+      </div>
+      <div class="field">
+        <label for="weight_kg">Weight (kg)</label>
+        <input type="number" id="weight_kg" min="30" max="300" step="0.1" required>
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="age">Age</label>
+        <input type="number" id="age" min="13" max="100" required>
+      </div>
+      <div class="field">
+        <label for="days_per_week">Days per week</label>
+        <select id="days_per_week" required>
+          <option value="3">3 days</option>
+          <option value="4">4 days</option>
+          <option value="5">5 days</option>
+          <option value="6">6 days</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="injuries_limitations">Injuries or limitations (optional)</label>
+      <input type="text" id="injuries_limitations" placeholder="e.g. lower back issue, avoid overhead pressing">
+    </div>
+    <button type="submit" class="submit-btn" id="submit-btn">Save and continue</button>
+    <div class="msg" id="msg"></div>
+  </form>
+</div>
+
+<script>
+async function checkMe(){
+  try{ const r = await fetch('/api/me'); return r.ok ? await r.json() : null; }catch(e){ return null; }
+}
+
+(async function init(){
+  const me = await checkMe();
+  if(!me){ location.href = '/'; return; }
+
+  // If a profile already exists, this page is being visited to EDIT it
+  // (from /profile), not for forced onboarding — prefill and relabel.
+  try{
+    const res = await fetch('/api/profile');
+    if(res.ok){
+      const p = await res.json();
+      if(p){
+        document.getElementById('page-title').textContent = 'Edit your profile';
+        document.getElementById('page-sub').textContent = 'Update your goals and preferences any time.';
+        document.getElementById('goal').value = p.goal;
+        document.getElementById('experience_level').value = p.experience_level;
+        document.getElementById('equipment_access').value = p.equipment_access;
+        document.getElementById('height_cm').value = p.height_cm;
+        document.getElementById('weight_kg').value = p.weight_kg;
+        document.getElementById('age').value = p.age;
+        document.getElementById('days_per_week').value = p.days_per_week;
+        document.getElementById('injuries_limitations').value = p.injuries_limitations || '';
+      }
+    }
+  }catch(e){}
+})();
+
+const form = document.getElementById('profile-form');
+const msgEl = document.getElementById('msg');
+const btn = document.getElementById('submit-btn');
+
+function extractErrorMessage(data, fallback){
+  if(!data) return fallback;
+  if(typeof data.detail === 'string') return data.detail;
+  if(Array.isArray(data.detail) && data.detail.length) return data.detail.map(d => d.msg).join(' ');
+  return fallback;
+}
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  msgEl.textContent = '';
+  msgEl.className = 'msg';
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const payload = {
+    goal: document.getElementById('goal').value,
+    experience_level: document.getElementById('experience_level').value,
+    equipment_access: document.getElementById('equipment_access').value,
+    height_cm: Number(document.getElementById('height_cm').value),
+    weight_kg: Number(document.getElementById('weight_kg').value),
+    age: Number(document.getElementById('age').value),
+    days_per_week: Number(document.getElementById('days_per_week').value),
+    injuries_limitations: document.getElementById('injuries_limitations').value.trim() || null,
+  };
+
+  try{
+    const res = await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      msgEl.textContent = extractErrorMessage(data, 'Something went wrong. Please try again.');
+      msgEl.className = 'msg err';
+      btn.disabled = false;
+      btn.textContent = 'Save and continue';
+      return;
+    }
+    location.href = '/';
+  }catch(err){
+    msgEl.textContent = 'Could not reach the server — check your connection.';
+    msgEl.className = 'msg err';
+    btn.disabled = false;
+    btn.textContent = 'Save and continue';
+  }
+});
+</script>
+</body>
+</html>

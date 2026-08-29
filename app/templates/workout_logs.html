@@ -319,7 +319,8 @@ document.getElementById('logout-btn').addEventListener('click', async ()=>{
 function daysAgo(n){ const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
 
 async function load(){
-  await ensureAuthed();
+  const me = await ensureAuthed();
+  if(!me.has_profile){ location.href = '/onboarding'; return; }
   document.getElementById('logout-btn').style.display = 'inline-block';
 
   let rows;

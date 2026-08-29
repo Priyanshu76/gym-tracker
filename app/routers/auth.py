@@ -42,17 +42,22 @@ def _now():
 
 
 @router.get("/me")
-def get_me(user: User = Depends(get_current_user)):
+def get_me(user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
     """
     Lets the frontend check "am I logged in, and as whom" purely by asking
     the server — no token to store or manage client-side at all, since the
     httpOnly cookie is sent automatically by the browser. A 401 here just
-    means "show the login screen."
+    means "show the login screen." has_profile drives the forced onboarding
+    gate the same way must_reset_password drives the forced password reset.
     """
+    from app.models.user_profile import UserProfile
+
+    has_profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first() is not None
     return {
         "username": user.username,
         "display_name": user.display_name,
         "must_reset_password": user.must_reset_password,
+        "has_profile": has_profile,
     }
 
 

@@ -6,4 +6,5 @@ from app.models.custom_exercise import CustomExercise  # noqa: F401
 from app.models.pending_signup import PendingSignup  # noqa: F401
 from app.models.session import Session  # noqa: F401
 from app.models.user import User  # noqa: F401
+from app.models.user_profile import UserProfile  # noqa: F401
 from app.models.workout_log import WorkoutLog  # noqa: F401

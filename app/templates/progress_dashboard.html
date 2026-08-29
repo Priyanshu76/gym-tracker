@@ -425,6 +425,7 @@ function animateNumber(el, target, suffix=''){
 // ==================================================================
 async function load(){
   const auth = await ensureAuthed();
+  if(!auth.has_profile){ location.href = '/onboarding'; return; }
   document.getElementById('logout-btn').style.display = 'inline-block';
 
   if(typeof Chart === 'undefined'){

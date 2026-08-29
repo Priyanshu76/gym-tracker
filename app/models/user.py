@@ -28,3 +28,4 @@ class User(Base):
     sessions: Mapped[list["Session"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     workout_logs: Mapped[list["WorkoutLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     custom_exercises: Mapped[list["CustomExercise"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    profile: Mapped["UserProfile | None"] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")

@@ -21,11 +21,12 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 # Routers get included here as each migration phase lands.
-from app.routers import auth, admin, workouts, exercises
+from app.routers import auth, admin, workouts, exercises, profile
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(workouts.router)
 app.include_router(exercises.router)
+app.include_router(profile.router)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -51,6 +52,16 @@ def dashboard_page(request: Request):
 @app.get("/logs", response_class=HTMLResponse)
 def logs_page(request: Request):
     return templates.TemplateResponse(request, "workout_logs.html")
+
+
+@app.get("/onboarding", response_class=HTMLResponse)
+def onboarding_page(request: Request):
+    return templates.TemplateResponse(request, "onboarding.html")
+
+
+@app.get("/profile", response_class=HTMLResponse)
+def profile_page(request: Request):
+    return templates.TemplateResponse(request, "onboarding.html")
 
 
 @app.get("/api/health")
