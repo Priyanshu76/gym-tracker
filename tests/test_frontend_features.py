@@ -91,6 +91,13 @@ def test_log_page_includes_wake_lock():
     assert "wakeLock" in r.text
 
 
+def test_log_page_includes_exercise_library_search():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "/api/exercises/search" in r.text
+    assert "exercise-datalist" in r.text
+
+
 def test_profile_page_includes_export_button():
     client = TestClient(app)
     r = client.get("/profile")

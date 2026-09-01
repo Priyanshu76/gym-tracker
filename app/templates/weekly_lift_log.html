@@ -1008,7 +1008,8 @@ function renderExerciseCard(ex, day, i){
         <span class="alt-chip add-chip" data-role="add-alt">+ Add</span>
       </div>
       <div class="add-alt-form" data-role="add-alt-form" style="display:none;">
-        <input type="text" data-role="add-alt-input" placeholder="New exercise name">
+        <input type="text" data-role="add-alt-input" list="exercise-datalist-${exId}" placeholder="Search the exercise library or type your own">
+        <datalist id="exercise-datalist-${exId}"></datalist>
         <button class="add-alt-confirm" data-role="add-alt-confirm">Add</button>
         <button class="add-alt-cancel" data-role="add-alt-cancel">Cancel</button>
       </div>
@@ -1035,6 +1036,25 @@ function renderExerciseCard(ex, day, i){
   const addAltConfirm = card.querySelector('[data-role="add-alt-confirm"]');
   const addAltCancel = card.querySelector('[data-role="add-alt-cancel"]');
   const setRowsEl = card.querySelector('[data-role="set-rows"]');
+
+  // Live-search the exercise library as the user types — falls back to
+  // free text naturally, since a <datalist> only suggests, never restricts
+  // what can actually be submitted.
+  const exerciseDatalist = card.querySelector(`#exercise-datalist-${exId}`);
+  let searchDebounce = null;
+  addAltInput.addEventListener('input', ()=>{
+    clearTimeout(searchDebounce);
+    const query = addAltInput.value.trim();
+    if(query.length < 2){ exerciseDatalist.innerHTML = ''; return; }
+    searchDebounce = setTimeout(async ()=>{
+      try{
+        const res = await authFetch(`/api/exercises/search?q=${encodeURIComponent(query)}`);
+        if(!res.ok) return;
+        const results = await res.json();
+        exerciseDatalist.innerHTML = results.map(r => `<option value="${r.name}"></option>`).join('');
+      }catch(e){}
+    }, 250);
+  });
   const lastTimeEl = card.querySelector('[data-role="last-time"]');
   const supersetRowEl = card.querySelector('[data-role="superset-row"]');
 
