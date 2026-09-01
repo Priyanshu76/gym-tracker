@@ -49,6 +49,15 @@ def test_log_page_ties_guidelines_to_users_goal():
     assert "TIPS.map(t=>" not in r.text  # the old unfiltered direct usage must be gone
 
 
+def test_log_page_includes_progression_wiring():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "formatProgressionReps" in r.text
+    assert "evaluate-progression" in r.text
+    assert "planExerciseId" in r.text
+    assert "progression-note" in r.text
+
+
 def test_dashboard_normalizes_muscle_group_taxonomy():
     client = TestClient(app)
     r = client.get("/dashboard")

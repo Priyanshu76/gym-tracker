@@ -24,6 +24,7 @@ def _plan_to_detail(plan: WorkoutPlan) -> PlanDetailOut:
                 day_index=day.day_index, day_name=day.day_name, split_label=day.split_label, is_rest=day.is_rest,
                 exercises=[
                     PlanExerciseOut(
+                        id=pe.id,
                         exercise_id=pe.exercise_id, order_index=pe.order_index, sets=pe.sets,
                         reps_low=pe.reps_low, reps_high=pe.reps_high,
                         name=pe.exercise.name, muscle_group=pe.exercise.muscle_group,

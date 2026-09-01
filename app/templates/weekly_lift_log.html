@@ -118,6 +118,7 @@
   .ex-info{ flex:1; min-width:0; }
   .ex-name{ font-weight:600; font-size:15px; color:var(--chalk); display:flex; align-items:center; gap:8px; }
   .ex-icon{ color:var(--accent); display:inline-flex; }
+  .progression-note{ font-size:11px; color:var(--blue); margin-top:2px; font-style:italic; }
   .ex-target{ font-size:12px; color:var(--steel); margin-top:2px; }
   .ex-slot-note{ font-size:11px; color:var(--blue); margin-top:2px; font-family:'JetBrains Mono', monospace; }
   .ex-nums{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--accent); text-align:right; white-space:nowrap; flex:none; }
@@ -562,6 +563,14 @@ let DATA = CLASSIC_DATA;
 
 const JS_DAY_KEYS = ['mon','tue','wed','thu','fri','sat','sun']; // matches generator's day_index 0-6 (Monday-first)
 
+function formatProgressionReps(ex){
+  const target = ex.current_reps_target ?? ex.reps_low;
+  if(ex.progression_rule === 'greyskull_lp') return `${target} (last set AMRAP)`;
+  if(ex.progression_rule === 'double_progression') return `${target} (range ${ex.reps_low}-${ex.reps_high})`;
+  if(ex.progression_rule === 'linear') return `${target}`;
+  return `${ex.reps_low}–${ex.reps_high}`; // manual/no progression — original static range
+}
+
 function transformGeneratedPlan(plan){
   return plan.days.map(day => ({
     key: JS_DAY_KEYS[day.day_index], // uses the actual day_index field, not array position —
@@ -574,8 +583,13 @@ function transformGeneratedPlan(plan){
       slot: ex.name, // no swap history to preserve for a freshly generated plan — slot starts as itself
       t: ex.muscle_group || '',
       sets: ex.sets,
-      reps: `${ex.reps_low}–${ex.reps_high}`,
+      reps: formatProgressionReps(ex),
       alts: [], // generated-plan exercises don't carry curated alternatives; "+ Add" still works
+      planExerciseId: ex.id,
+      progressionRule: ex.progression_rule,
+      currentWeightKg: ex.current_weight_kg,
+      currentRepsTarget: ex.current_reps_target,
+      lastProgressionNote: ex.last_progression_note,
     })),
   }));
 }
@@ -936,11 +950,12 @@ function renderExerciseCard(ex, day, i){
   card.className = 'ex-card';
 
   let setRowsHtml = '';
+  const prefilledWeight = ex.currentWeightKg != null ? ex.currentWeightKg : '';
   for(let s=1;s<=ex.sets;s++){
     setRowsHtml += `
       <div class="set-row" data-set="${s}">
         <span class="set-n">Set ${s}</span>
-        <input type="number" inputmode="decimal" class="w-input" placeholder="kg" min="0" max="500" step="0.5">
+        <input type="number" inputmode="decimal" class="w-input" placeholder="kg" min="0" max="500" step="0.5" value="${prefilledWeight}">
         <span class="x">×</span>
         <input type="number" inputmode="numeric" class="r-input" placeholder="reps (${ex.reps})" min="0" max="100" step="1">
         <input type="number" inputmode="decimal" class="rpe-input" placeholder="RPE" min="1" max="10" step="0.5" title="Rate of Perceived Exertion (1-10, optional)">
@@ -954,6 +969,7 @@ function renderExerciseCard(ex, day, i){
     </span>
   `).join('');
 
+  card.dataset.planExerciseId = ex.planExerciseId || '';
   card.innerHTML = `
     <div class="ex-main">
       <div class="badge" data-role="badge">${i+1}</div>
@@ -961,6 +977,7 @@ function renderExerciseCard(ex, day, i){
         <div class="ex-name" data-role="ex-name"><span class="ex-icon">${icon(guessIconCategory(ex.t), 16)}</span>${ex.n}</div>
         <div class="ex-target">${ex.t}</div>
         <div class="ex-slot-note" data-role="ex-slot-note" style="display:${ex.n !== ex.slot ? 'block' : 'none'}">Logged as: ${ex.slot}</div>
+        ${ex.lastProgressionNote ? `<div class="progression-note">${ex.lastProgressionNote}</div>` : ''}
       </div>
       <div class="ex-nums"><span class="lbl">Target</span>${ex.sets} × ${ex.reps}</div>
       <div class="chev">▾</div>
@@ -1210,6 +1227,17 @@ function renderExerciseCard(ex, day, i){
       badgeEl.textContent = '✓';
       await setLocalDone(exId, true);
       startRestTimer(90);
+
+      const planExerciseId = card.dataset.planExerciseId;
+      if(planExerciseId){
+        try{
+          const evalRes = await authFetch(`/api/plans/plan-exercises/${planExerciseId}/evaluate-progression`, { method:'POST' });
+          if(evalRes.ok){
+            const evalData = await evalRes.json();
+            if(evalData.note) showToast(evalData.note, null);
+          }
+        }catch(e){} // progression feedback is a nice-to-have — a failure here must never block the logged sets from counting
+      }
     } else {
       statusEl.textContent = `Logged ${okCount}/${toSend.length} — check connection and retry.`;
       statusEl.className = 'log-status err';
