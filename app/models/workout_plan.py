@@ -1,11 +1,19 @@
+import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+
+class ProgressionRule(str, enum.Enum):
+    none = "none"  # manual — user enters their own weight every time, no auto-progression
+    linear = "linear"
+    greyskull_lp = "greyskull_lp"
+    double_progression = "double_progression"
 
 
 class WorkoutPlan(Base):
@@ -16,6 +24,7 @@ class WorkoutPlan(Base):
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    default_progression_rule: Mapped[ProgressionRule] = mapped_column(Enum(ProgressionRule), nullable=False, default=ProgressionRule.linear)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     days: Mapped[list["PlanDay"]] = relationship(back_populates="plan", cascade="all, delete-orphan", order_by="PlanDay.day_index")
@@ -47,6 +56,16 @@ class PlanExercise(Base):
     sets: Mapped[int] = mapped_column(Integer, nullable=False)
     reps_low: Mapped[int] = mapped_column(Integer, nullable=False)
     reps_high: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Progression state — None per-exercise means "inherit the plan's default".
+    # current_weight_kg/current_reps_target are the LIVE prescription the
+    # engine updates after each logged session; reps_low/reps_high above
+    # stay fixed as the exercise's original designed range.
+    progression_rule: Mapped[ProgressionRule | None] = mapped_column(Enum(ProgressionRule), nullable=True)
+    current_weight_kg: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)
+    current_reps_target: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    consecutive_misses: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_progression_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     plan_day: Mapped["PlanDay"] = relationship(back_populates="exercises")
     exercise: Mapped["Exercise"] = relationship()

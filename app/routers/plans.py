@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession, joinedload
@@ -7,6 +8,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.user_profile import UserProfile
+from app.models.workout_log import WorkoutLog
 from app.models.workout_plan import PlanDay, PlanExercise, WorkoutPlan
 from app.schemas.plan import PlanDayOut, PlanDetailOut, PlanExerciseOut, PlanSummaryOut
 from app.services.plan_generator import generate_plan_options
@@ -25,6 +27,10 @@ def _plan_to_detail(plan: WorkoutPlan) -> PlanDetailOut:
                         exercise_id=pe.exercise_id, order_index=pe.order_index, sets=pe.sets,
                         reps_low=pe.reps_low, reps_high=pe.reps_high,
                         name=pe.exercise.name, muscle_group=pe.exercise.muscle_group,
+                        progression_rule=(pe.progression_rule or plan.default_progression_rule).value,
+                        current_weight_kg=float(pe.current_weight_kg) if pe.current_weight_kg is not None else None,
+                        current_reps_target=pe.current_reps_target if pe.current_reps_target is not None else pe.reps_low,
+                        last_progression_note=pe.last_progression_note,
                     )
                     for pe in day.exercises
                 ],
@@ -34,17 +40,133 @@ def _plan_to_detail(plan: WorkoutPlan) -> PlanDetailOut:
     )
 
 
+@router.post("/plan-exercises/{plan_exercise_id}/evaluate-progression")
+def evaluate_progression_endpoint(
+    plan_exercise_id: uuid.UUID,
+    workout_date: date | None = None,
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """
+    Runs the progression engine for one exercise after a session, using
+    whatever sets were logged for it on `workout_date` (defaults to the
+    most recent date this exercise has any Main-section logs for). Persists
+    the new prescription and returns it, including a human-readable note —
+    every target should say why it's that number, not just what it is.
+    """
+    from app.models.exercise import EquipmentAccess
+    from app.services.progression import (
+        SetResult,
+        evaluate_double_progression,
+        evaluate_greyskull_lp,
+        evaluate_linear,
+    )
+
+    pe = (
+        db.query(PlanExercise)
+        .join(PlanDay)
+        .join(WorkoutPlan)
+        .filter(PlanExercise.id == plan_exercise_id, WorkoutPlan.user_id == user.id)
+        .first()
+    )
+    if not pe:
+        raise HTTPException(status_code=404, detail="Plan exercise not found")
+
+    plan = db.query(WorkoutPlan).join(PlanDay).filter(PlanDay.id == pe.plan_day_id).first()
+    rule = pe.progression_rule or plan.default_progression_rule
+
+    if workout_date is None:
+        last_date_row = (
+            db.query(WorkoutLog.workout_date)
+            .filter(WorkoutLog.user_id == user.id, WorkoutLog.exercise == pe.exercise.name, WorkoutLog.section == "Main")
+            .order_by(WorkoutLog.workout_date.desc())
+            .first()
+        )
+        if not last_date_row:
+            raise HTTPException(status_code=400, detail="No logged sets found for this exercise yet.")
+        workout_date = last_date_row[0]
+
+    logs = (
+        db.query(WorkoutLog)
+        .filter(
+            WorkoutLog.user_id == user.id, WorkoutLog.exercise == pe.exercise.name,
+            WorkoutLog.workout_date == workout_date, WorkoutLog.section == "Main",
+            WorkoutLog.set_type == "working",  # warmup/drop/etc. sets never drive progression
+        )
+        .order_by(WorkoutLog.set_number)
+        .all()
+    )
+    if not logs:
+        raise HTTPException(status_code=400, detail="No working sets found for this exercise on that date.")
+
+    is_bodyweight = pe.exercise.equipment_needed == EquipmentAccess.bodyweight_only
+    sets_performed = [SetResult(reps=log.reps, weight_kg=float(log.weight_kg) if log.weight_kg else None) for log in logs]
+
+    # Establish a baseline on first-ever evaluation, so the very first
+    # logged session sets the starting point rather than requiring the user
+    # to have pre-configured a weight before they'd even tried the exercise.
+    if pe.current_weight_kg is None and not is_bodyweight:
+        pe.current_weight_kg = sets_performed[0].weight_kg or 0
+    if pe.current_reps_target is None:
+        pe.current_reps_target = pe.reps_low
+
+    current_weight = float(pe.current_weight_kg) if pe.current_weight_kg is not None else 0.0
+
+    if rule.value == "none":
+        raise HTTPException(status_code=400, detail="This exercise is set to manual progression — nothing to evaluate.")
+    elif rule.value == "linear":
+        result = evaluate_linear(
+            current_weight_kg=current_weight, target_reps=pe.current_reps_target,
+            sets_performed=sets_performed, consecutive_misses=pe.consecutive_misses, is_bodyweight=is_bodyweight,
+        )
+    elif rule.value == "greyskull_lp":
+        result = evaluate_greyskull_lp(
+            current_weight_kg=current_weight, target_reps=pe.current_reps_target,
+            sets_performed=sets_performed, consecutive_misses=pe.consecutive_misses,
+        )
+    else:  # double_progression
+        result = evaluate_double_progression(
+            current_weight_kg=current_weight, rep_range_low=pe.reps_low, rep_range_high=pe.reps_high,
+            current_reps_target=pe.current_reps_target, sets_performed=sets_performed,
+        )
+
+    pe.current_weight_kg = result.new_weight_kg
+    pe.current_reps_target = result.new_reps_target
+    pe.consecutive_misses = result.new_consecutive_misses
+    pe.last_progression_note = result.note
+    db.commit()
+
+    return {
+        "outcome": result.outcome,
+        "note": result.note,
+        "new_weight_kg": result.new_weight_kg,
+        "new_reps_target": result.new_reps_target,
+    }
+
+
 @router.post("/generate", response_model=list[PlanDetailOut])
 def generate_plans(user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+    from app.models.workout_plan import ProgressionRule
+
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
     if not profile:
         raise HTTPException(status_code=400, detail="Complete your profile before generating a plan.")
+
+    # Goal-appropriate default progression scheme — greyskull_lp rewards the
+    # heavy-compound, low-rep style strength training favors; double
+    # progression through a rep range is the standard hypertrophy approach;
+    # the rest default to plain linear, which is simpler and appropriate
+    # when the goal isn't primarily about programmed overload.
+    default_rule = {
+        "strength": ProgressionRule.greyskull_lp,
+        "hypertrophy": ProgressionRule.double_progression,
+    }.get(profile.goal.value, ProgressionRule.linear)
 
     options = generate_plan_options(profile, db, num_options=3, extra_seed=str(uuid.uuid4()))
 
     saved_plans = []
     for option in options:
-        plan = WorkoutPlan(user_id=user.id, name=option.name, is_active=False)
+        plan = WorkoutPlan(user_id=user.id, name=option.name, is_active=False, default_progression_rule=default_rule)
         db.add(plan)
         db.flush()
         for day in option.days:

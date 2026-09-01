@@ -12,6 +12,10 @@ class PlanExerciseOut(BaseModel):
     reps_high: int
     name: str
     muscle_group: str | None
+    progression_rule: str | None
+    current_weight_kg: float | None
+    current_reps_target: int | None
+    last_progression_note: str | None
 
 
 class PlanDayOut(BaseModel):
