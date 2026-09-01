@@ -17,6 +17,7 @@ class PlanExerciseOut(BaseModel):
     current_weight_kg: float | None
     current_reps_target: int | None
     last_progression_note: str | None
+    superset_group_id: uuid.UUID | None
 
 
 class PlanDayOut(BaseModel):

@@ -119,6 +119,12 @@
   .ex-name{ font-weight:600; font-size:15px; color:var(--chalk); display:flex; align-items:center; gap:8px; }
   .ex-icon{ color:var(--accent); display:inline-flex; }
   .progression-note{ font-size:11px; color:var(--blue); margin-top:2px; font-style:italic; }
+  .superset-row{ margin-top:4px; }
+  .superset-badge{ display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--accent); background:rgba(22,224,197,.1); padding:3px 8px; border-radius:10px; }
+  .superset-unlink{ background:none; border:none; color:var(--steel); font-size:10px; text-decoration:underline; cursor:pointer; margin-left:4px; }
+  .superset-link-btn{ display:inline-flex; align-items:center; gap:4px; background:none; border:1px dashed var(--line); color:var(--steel); font-size:11px; padding:3px 8px; border-radius:10px; cursor:pointer; }
+  .superset-link-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .superset-picker{ background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:12px; padding:4px 8px; }
   .ex-target{ font-size:12px; color:var(--steel); margin-top:2px; }
   .ex-slot-note{ font-size:11px; color:var(--blue); margin-top:2px; font-family:'JetBrains Mono', monospace; }
   .ex-nums{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--accent); text-align:right; white-space:nowrap; flex:none; }
@@ -586,6 +592,7 @@ function transformGeneratedPlan(plan){
       reps: formatProgressionReps(ex),
       alts: [], // generated-plan exercises don't carry curated alternatives; "+ Add" still works
       planExerciseId: ex.id,
+      supersetGroupId: ex.superset_group_id,
       progressionRule: ex.progression_rule,
       currentWeightKg: ex.current_weight_kg,
       currentRepsTarget: ex.current_reps_target,
@@ -978,6 +985,7 @@ function renderExerciseCard(ex, day, i){
         <div class="ex-target">${ex.t}</div>
         <div class="ex-slot-note" data-role="ex-slot-note" style="display:${ex.n !== ex.slot ? 'block' : 'none'}">Logged as: ${ex.slot}</div>
         ${ex.lastProgressionNote ? `<div class="progression-note">${ex.lastProgressionNote}</div>` : ''}
+        ${ex.planExerciseId ? `<div class="superset-row" data-role="superset-row"></div>` : ''}
       </div>
       <div class="ex-nums"><span class="lbl">Target</span>${ex.sets} × ${ex.reps}</div>
       <div class="chev">▾</div>
@@ -1017,6 +1025,41 @@ function renderExerciseCard(ex, day, i){
   const addAltCancel = card.querySelector('[data-role="add-alt-cancel"]');
   const setRowsEl = card.querySelector('[data-role="set-rows"]');
   const lastTimeEl = card.querySelector('[data-role="last-time"]');
+  const supersetRowEl = card.querySelector('[data-role="superset-row"]');
+
+  function renderSupersetRow(){
+    if(!supersetRowEl) return;
+    if(ex.supersetGroupId){
+      const partner = day.exercises.find(other => other !== ex && other.supersetGroupId === ex.supersetGroupId);
+      supersetRowEl.innerHTML = `<span class="superset-badge">${icon('refresh',12)} Superset with ${partner ? partner.n : '—'}</span> <button type="button" class="superset-unlink" data-role="superset-unlink">Unlink</button>`;
+      supersetRowEl.querySelector('[data-role="superset-unlink"]').addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        await authFetch(`/api/plans/plan-exercises/${ex.planExerciseId}/unpair-superset`, { method:'PATCH' });
+        renderDay();
+      });
+    } else {
+      const candidates = day.exercises.filter(other => other !== ex && !other.supersetGroupId && other.planExerciseId);
+      if(!candidates.length){ supersetRowEl.innerHTML = ''; return; }
+      supersetRowEl.innerHTML = `<button type="button" class="superset-link-btn" data-role="superset-link-btn">${icon('refresh',12)} Link as superset</button>`;
+      supersetRowEl.querySelector('[data-role="superset-link-btn"]').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const picker = document.createElement('select');
+        picker.className = 'superset-picker';
+        picker.innerHTML = `<option value="">Pick a partner exercise…</option>` +
+          candidates.map(c => `<option value="${c.planExerciseId}">${c.n}</option>`).join('');
+        picker.addEventListener('change', async ()=>{
+          if(!picker.value) return;
+          await authFetch('/api/plans/plan-exercises/pair-superset?' + new URLSearchParams({
+            plan_exercise_id_a: ex.planExerciseId, plan_exercise_id_b: picker.value,
+          }), { method:'PATCH' });
+          renderDay();
+        });
+        supersetRowEl.innerHTML = '';
+        supersetRowEl.appendChild(picker);
+      });
+    }
+  }
+  renderSupersetRow();
 
   getLocalDone(exId).then(done=>{ if(done) card.classList.add('done'); });
 
@@ -1228,7 +1271,19 @@ function renderExerciseCard(ex, day, i){
       card.classList.add('done');
       badgeEl.textContent = '✓';
       await setLocalDone(exId, true);
-      startRestTimer(90);
+
+      // Rest only after the whole superset pair is done, not after each
+      // individual exercise — matches openGym's stated behavior. Exercises
+      // outside a superset keep the original unconditional timer start.
+      let shouldStartTimer = true;
+      if(ex.supersetGroupId){
+        const progress = DAY_SUPERSET_PROGRESS[ex.supersetGroupId] || new Set();
+        progress.add(ex.planExerciseId);
+        DAY_SUPERSET_PROGRESS[ex.supersetGroupId] = progress;
+        const groupSize = day.exercises.filter(other => other.supersetGroupId === ex.supersetGroupId).length;
+        shouldStartTimer = progress.size >= groupSize;
+      }
+      if(shouldStartTimer) startRestTimer(90);
 
       const messages = [];
       if(prHit){
@@ -1353,7 +1408,13 @@ function renderAuxSection(title, list, section, dayKey){
   return wrap;
 }
 
+// Tracks which exercises within a superset group have been fully logged
+// today — the rest timer only fires once every exercise in the group is
+// done, not after each individual one. Reset on every renderDay() call.
+let DAY_SUPERSET_PROGRESS = {};
+
 async function renderDay(){
+  DAY_SUPERSET_PROGRESS = {};
   const day = DATA.find(d=>d.key===activeDay);
   panelTitle.textContent = day.name;
   panelSub.textContent = day.rest ? 'Rest day' : `${day.groups} · ${day.exercises.length} exercises · ${totalSets(day)} sets`;

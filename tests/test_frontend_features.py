@@ -66,6 +66,15 @@ def test_log_page_includes_pr_celebration():
     assert "New weight PR" in r.text
 
 
+def test_log_page_includes_superset_wiring():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "supersetGroupId" in r.text
+    assert "pair-superset" in r.text
+    assert "unpair-superset" in r.text
+    assert "DAY_SUPERSET_PROGRESS" in r.text
+
+
 def test_dashboard_normalizes_muscle_group_taxonomy():
     client = TestClient(app)
     r = client.get("/dashboard")

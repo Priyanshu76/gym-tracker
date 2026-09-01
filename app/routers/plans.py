@@ -32,6 +32,7 @@ def _plan_to_detail(plan: WorkoutPlan) -> PlanDetailOut:
                         current_weight_kg=float(pe.current_weight_kg) if pe.current_weight_kg is not None else None,
                         current_reps_target=pe.current_reps_target if pe.current_reps_target is not None else pe.reps_low,
                         last_progression_note=pe.last_progression_note,
+                        superset_group_id=pe.superset_group_id,
                     )
                     for pe in day.exercises
                 ],
@@ -143,6 +144,62 @@ def evaluate_progression_endpoint(
         "new_weight_kg": result.new_weight_kg,
         "new_reps_target": result.new_reps_target,
     }
+
+
+@router.patch("/plan-exercises/pair-superset")
+def pair_superset(
+    plan_exercise_id_a: uuid.UUID,
+    plan_exercise_id_b: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """
+    Pairs two exercises within the same plan day as a superset — logged
+    back-to-back with a rest only after the pair, not between them. Pairs
+    only for now, not arbitrary N-way groups.
+    """
+    if plan_exercise_id_a == plan_exercise_id_b:
+        raise HTTPException(status_code=400, detail="Can't pair an exercise with itself.")
+
+    pe_a = db.query(PlanExercise).join(PlanDay).join(WorkoutPlan).filter(
+        PlanExercise.id == plan_exercise_id_a, WorkoutPlan.user_id == user.id
+    ).first()
+    pe_b = db.query(PlanExercise).join(PlanDay).join(WorkoutPlan).filter(
+        PlanExercise.id == plan_exercise_id_b, WorkoutPlan.user_id == user.id
+    ).first()
+    if not pe_a or not pe_b:
+        raise HTTPException(status_code=404, detail="One or both exercises not found")
+    if pe_a.plan_day_id != pe_b.plan_day_id:
+        raise HTTPException(status_code=400, detail="Both exercises must be on the same day to be paired.")
+
+    new_group_id = uuid.uuid4()
+    pe_a.superset_group_id = new_group_id
+    pe_b.superset_group_id = new_group_id
+    db.commit()
+    return {"success": True, "superset_group_id": str(new_group_id)}
+
+
+@router.patch("/plan-exercises/{plan_exercise_id}/unpair-superset")
+def unpair_superset(
+    plan_exercise_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """Dissolves the WHOLE group this exercise belongs to, not just this one
+    row — a superset only makes sense as a pair, so removing one side
+    degrades both back to independent singles."""
+    pe = db.query(PlanExercise).join(PlanDay).join(WorkoutPlan).filter(
+        PlanExercise.id == plan_exercise_id, WorkoutPlan.user_id == user.id
+    ).first()
+    if not pe:
+        raise HTTPException(status_code=404, detail="Plan exercise not found")
+
+    if pe.superset_group_id:
+        db.query(PlanExercise).filter(PlanExercise.superset_group_id == pe.superset_group_id).update(
+            {"superset_group_id": None}
+        )
+        db.commit()
+    return {"success": True}
 
 
 @router.post("/generate", response_model=list[PlanDetailOut])

@@ -67,5 +67,10 @@ class PlanExercise(Base):
     consecutive_misses: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_progression_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
+    # Two PlanExercise rows in the same PlanDay sharing this id are a
+    # superset — logged back-to-back with a rest only after the pair.
+    # Pairs only (not arbitrary N-way groups) for now.
+    superset_group_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+
     plan_day: Mapped["PlanDay"] = relationship(back_populates="exercises")
     exercise: Mapped["Exercise"] = relationship()
