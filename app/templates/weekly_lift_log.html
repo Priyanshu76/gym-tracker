@@ -1563,6 +1563,21 @@ drawerBg.addEventListener('click', closeDrawer);
   const customList = await fetchCustomExercises();
   applyCustomExercises(customList.map(c => ({ id: c.id, mainExercise: c.main_exercise, altName: c.custom_alt_name })));
   renderDay();
+
+  // Keep the screen awake while actively viewing/logging a workout — no
+  // unlocking the phone and losing your place between sets. Released when
+  // the tab goes to background; re-requested when it comes back, since the
+  // browser revokes the lock automatically on visibility change anyway.
+  if('wakeLock' in navigator){
+    let wakeLockRef = null;
+    const requestWakeLock = async ()=>{
+      try{ wakeLockRef = await navigator.wakeLock.request('screen'); }catch(e){ /* not fatal — logging still works without it */ }
+    };
+    requestWakeLock();
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState === 'visible' && !wakeLockRef) requestWakeLock();
+    });
+  }
 })();
 </script>
 </body>

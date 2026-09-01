@@ -21,6 +21,9 @@
   .nav-link{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--steel); text-decoration:none; border:1px solid var(--line); border-radius:20px; padding:6px 12px; }
   .nav-link:hover{ border-color:var(--accent); color:var(--accent); }
   .state-msg{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; color:var(--steel); font-size:14px; }
+  .import-msg{ font-size:12px; min-height:14px; }
+  .import-msg.ok{ color:var(--green); }
+  .import-msg.err{ color:var(--rust); }
   .card{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:14px; }
   .card.active{ border-color:var(--green); }
   .plan-name{ font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:15px; margin:0 0 8px; }
@@ -47,6 +50,14 @@
     </div>
   </header>
   <div id="root"><div class="state-msg">Loading…</div></div>
+
+  <div class="section-head" style="margin-top:28px;">Import a shared plan</div>
+  <div class="card">
+    <p style="font-size:12.5px; color:var(--steel); margin:0 0 10px;">Received a plan file from someone else? Importing adds it as a new option — it never touches your existing plans.</p>
+    <input type="file" id="import-file-input" accept="application/json" style="display:none;">
+    <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">${icon('plus',14)} Choose plan file</button>
+    <div id="import-msg" class="import-msg" style="margin-top:8px;"></div>
+  </div>
 </div>
 
 <script>
@@ -110,7 +121,40 @@ function renderOptions(options, activePlan){
   `;
 }
 
-(async function init(){
+document.getElementById('import-file-input').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const msgEl = document.getElementById('import-msg');
+  msgEl.textContent = 'Importing…';
+  msgEl.className = 'import-msg';
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    // Accepts either a full-account export (uses the first plan found) or a single-plan object directly.
+    const planPayload = parsed.plans ? parsed.plans[0] : parsed;
+    if(!planPayload || !planPayload.name || !planPayload.days){
+      throw new Error('not a recognizable plan file');
+    }
+    const res = await fetch('/api/export/plans/import', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(planPayload),
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail || 'import failed');
+    const skipped = data.skipped_exercises || [];
+    msgEl.textContent = skipped.length
+      ? `Imported — ${skipped.length} exercise(s) not found in the library and were skipped.`
+      : 'Imported! Check the list above to activate it.';
+    msgEl.className = 'import-msg ok';
+    init();
+  }catch(err){
+    msgEl.textContent = 'Could not import — make sure this is a valid exported plan file.';
+    msgEl.className = 'import-msg err';
+  }
+  e.target.value = '';
+});
+
+async function init(){
   const me = await checkMe();
   if(!me){ location.href = '/'; return; }
   if(!me.has_profile){ location.href = '/onboarding'; return; }
@@ -134,7 +178,8 @@ function renderOptions(options, activePlan){
       <button class="btn btn-primary" onclick="generate()">${icon('target',14)} Generate a plan based on my goals</button></div>
     `;
   }
-})();
+}
+init();
 </script>
 </body>
 </html>

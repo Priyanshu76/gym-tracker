@@ -123,6 +123,8 @@
       <div class="msg" id="password-msg"></div>
     </form>
 
+    <button type="button" id="export-data-btn" style="width:100%; padding:11px; margin-bottom:12px; border:1px solid var(--line); background:none; color:var(--chalk); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Export my data (JSON)</button>
+
     <button type="button" id="delete-account-btn" style="width:100%; padding:11px; border:1px solid var(--rust); background:none; color:var(--rust); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Delete my account</button>
     <div class="msg" id="delete-msg"></div>
   </div>
@@ -252,6 +254,25 @@ pwForm.addEventListener('submit', async (e)=>{
 });
 
 // ---------------- Delete account ----------------
+// ---------------- Export data ----------------
+document.getElementById('export-data-btn').addEventListener('click', async ()=>{
+  try{
+    const res = await fetch('/api/export/full');
+    if(!res.ok) throw new Error('export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gym-tracker-export-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    alert('Could not export your data — check your connection and try again.');
+  }
+});
+
 document.getElementById('delete-account-btn').addEventListener('click', async ()=>{
   const confirmed = confirm("Delete your account permanently? This removes all your workout logs, plans, and profile data. This cannot be undone.");
   if(!confirmed) return;

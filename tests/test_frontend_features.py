@@ -85,6 +85,26 @@ def test_log_page_includes_timed_and_unilateral_wiring():
     assert "per-side-hint" in r.text
 
 
+def test_log_page_includes_wake_lock():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "wakeLock" in r.text
+
+
+def test_profile_page_includes_export_button():
+    client = TestClient(app)
+    r = client.get("/profile")
+    assert 'id="export-data-btn"' in r.text
+    assert "/api/export/full" in r.text
+
+
+def test_plans_page_includes_import_ui():
+    client = TestClient(app)
+    r = client.get("/plans")
+    assert 'id="import-file-input"' in r.text
+    assert "/api/export/plans/import" in r.text
+
+
 def test_dashboard_normalizes_muscle_group_taxonomy():
     client = TestClient(app)
     r = client.get("/dashboard")
