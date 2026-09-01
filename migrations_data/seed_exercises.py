@@ -44,6 +44,11 @@ SPLIT_CATEGORY_MAP = {
     "Bodyweight Crunch": "core", "Ab Wheel Rollout": "core", "Plank": "core", "Mountain Climber": "core",
 }
 
+# Logged by elapsed time instead of reps.
+TIMED_EXERCISES = {"Plank"}
+# Logged as total reps, displayed/labeled as a per-side split.
+UNILATERAL_EXERCISES = {"Walking Lunge", "Bulgarian Split Squat"}
+
 # (name, category, muscle_group, movement_pattern, equipment_needed, min_experience,
 #  suitable_goals, sets, reps_low, reps_high)
 G_STR, G_HYP, G_FAT, G_END, G_GEN = "strength", "hypertrophy", "fat_loss", "endurance", "general_fitness"
@@ -148,6 +153,7 @@ def seed():
                 movement_pattern=movement_pattern, equipment_needed=equipment_needed,
                 min_experience_level=min_experience, suitable_goals=suitable_goals,
                 default_sets=sets, default_reps_low=reps_low, default_reps_high=reps_high,
+                is_timed=name in TIMED_EXERCISES, is_unilateral=name in UNILATERAL_EXERCISES,
             ))
             created += 1
         db.commit()

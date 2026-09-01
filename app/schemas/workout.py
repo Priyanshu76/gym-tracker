@@ -17,9 +17,17 @@ class LogSetRequest(BaseModel):
     set_number: int | None = None
     weight_kg: float | None = None
     reps: int | None = None
+    duration_seconds: int | None = None
     rpe: float | None = None  # 1.0-10.0
     set_type: SetType = SetType.working
     metrics: dict | None = None  # Warmup/Stretch generic fields — replaces the old fixed Field1-3 columns
+
+    @field_validator("duration_seconds")
+    @classmethod
+    def validate_duration(cls, v):
+        if v is not None and not (0 <= v <= 3600):
+            raise ValueError("Duration must be between 0 and 3600 seconds.")
+        return v
 
     @field_validator("weight_kg")
     @classmethod
@@ -64,6 +72,7 @@ class WorkoutLogOut(BaseModel):
     set_number: int | None
     weight_kg: float | None
     reps: int | None
+    duration_seconds: int | None
     rpe: float | None
     set_type: SetType
     metrics: dict | None

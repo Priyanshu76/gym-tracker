@@ -75,6 +75,16 @@ def test_log_page_includes_superset_wiring():
     assert "DAY_SUPERSET_PROGRESS" in r.text
 
 
+def test_log_page_includes_timed_and_unilateral_wiring():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "isTimed" in r.text
+    assert "isUnilateral" in r.text
+    assert "work-timer-btn" in r.text
+    assert "duration_seconds" in r.text
+    assert "per-side-hint" in r.text
+
+
 def test_dashboard_normalizes_muscle_group_taxonomy():
     client = TestClient(app)
     r = client.get("/dashboard")

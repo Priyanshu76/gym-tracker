@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import ARRAY, Enum, Integer, String
+from sqlalchemy import ARRAY, Boolean, Enum, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -47,6 +47,15 @@ class Exercise(Base):
     default_sets: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
     default_reps_low: Mapped[int] = mapped_column(Integer, nullable=False, default=8)
     default_reps_high: Mapped[int] = mapped_column(Integer, nullable=False, default=12)
+
+    # Logged by elapsed time instead of reps (planks, wall sits, hangs,
+    # loaded carries) — can still carry weight, so this doesn't replace
+    # weight_kg, just changes what the "reps" input actually represents.
+    is_timed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Unilateral (lunges, single-arm rows, etc.) — the user logs total reps,
+    # the UI shows/labels the per-side split; progression steps in twos so
+    # the target always divides evenly.
+    is_unilateral: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 EQUIPMENT_RANK = {

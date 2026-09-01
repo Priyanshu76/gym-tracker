@@ -18,6 +18,8 @@ class PlanExerciseOut(BaseModel):
     current_reps_target: int | None
     last_progression_note: str | None
     superset_group_id: uuid.UUID | None
+    is_timed: bool
+    is_unilateral: bool
 
 
 class PlanDayOut(BaseModel):

@@ -43,6 +43,7 @@ class WorkoutLog(Base):
     set_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     weight_kg: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)
     reps: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)  # timed exercises (planks, holds) log this instead of reps
     rpe: Mapped[float | None] = mapped_column(Numeric(3, 1), nullable=True)  # 1.0-10.0, RPE/RIR scale
     set_type: Mapped[SetType] = mapped_column(Enum(SetType), nullable=False, default=SetType.working)
 

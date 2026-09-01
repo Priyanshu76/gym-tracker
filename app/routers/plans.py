@@ -33,6 +33,8 @@ def _plan_to_detail(plan: WorkoutPlan) -> PlanDetailOut:
                         current_reps_target=pe.current_reps_target if pe.current_reps_target is not None else pe.reps_low,
                         last_progression_note=pe.last_progression_note,
                         superset_group_id=pe.superset_group_id,
+                        is_timed=pe.exercise.is_timed,
+                        is_unilateral=pe.exercise.is_unilateral,
                     )
                     for pe in day.exercises
                 ],

@@ -125,6 +125,10 @@
   .superset-link-btn{ display:inline-flex; align-items:center; gap:4px; background:none; border:1px dashed var(--line); color:var(--steel); font-size:11px; padding:3px 8px; border-radius:10px; cursor:pointer; }
   .superset-link-btn:hover{ border-color:var(--accent); color:var(--accent); }
   .superset-picker{ background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:12px; padding:4px 8px; }
+  .work-timer-btn{ display:flex; align-items:center; gap:4px; background:var(--surface-2); border:1px solid var(--accent); color:var(--accent); border-radius:6px; padding:8px 10px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:11px; cursor:pointer; white-space:nowrap; flex:none; }
+  .work-timer-btn:hover{ background:var(--accent); color:#0a1512; }
+  .duration-input{ background:var(--surface-2); }
+  .per-side-hint{ font-size:11px; color:var(--steel); margin:-4px 0 6px 104px; }
   .ex-target{ font-size:12px; color:var(--steel); margin-top:2px; }
   .ex-slot-note{ font-size:11px; color:var(--blue); margin-top:2px; font-family:'JetBrains Mono', monospace; }
   .ex-nums{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--accent); text-align:right; white-space:nowrap; flex:none; }
@@ -597,6 +601,8 @@ function transformGeneratedPlan(plan){
       currentWeightKg: ex.current_weight_kg,
       currentRepsTarget: ex.current_reps_target,
       lastProgressionNote: ex.last_progression_note,
+      isTimed: ex.is_timed,
+      isUnilateral: ex.is_unilateral,
     })),
   }));
 }
@@ -959,14 +965,19 @@ function renderExerciseCard(ex, day, i){
   let setRowsHtml = '';
   const prefilledWeight = ex.currentWeightKg != null ? ex.currentWeightKg : '';
   for(let s=1;s<=ex.sets;s++){
+    const repsField = ex.isTimed
+      ? `<input type="number" inputmode="numeric" class="r-input duration-input" placeholder="seconds" min="0" max="3600" step="1" readonly>
+         <button type="button" class="work-timer-btn" data-role="work-timer-btn">${icon('refresh',12)} Start</button>`
+      : `<input type="number" inputmode="numeric" class="r-input" placeholder="${ex.isUnilateral ? 'reps (total, both sides)' : `reps (${ex.reps})`}" min="0" max="100" step="1">`;
     setRowsHtml += `
       <div class="set-row" data-set="${s}">
         <span class="set-n">Set ${s}</span>
         <input type="number" inputmode="decimal" class="w-input" placeholder="kg" min="0" max="500" step="0.5" value="${prefilledWeight}">
         <span class="x">×</span>
-        <input type="number" inputmode="numeric" class="r-input" placeholder="reps (${ex.reps})" min="0" max="100" step="1">
+        ${repsField}
         <input type="number" inputmode="decimal" class="rpe-input" placeholder="RPE" min="1" max="10" step="0.5" title="Rate of Perceived Exertion (1-10, optional)">
-      </div>`;
+      </div>
+      ${ex.isUnilateral ? `<div class="per-side-hint" data-role="per-side-hint"></div>` : ''}`;
   }
 
   const altsHtml = ex.alts.map(a => `
@@ -1098,7 +1109,9 @@ function renderExerciseCard(ex, day, i){
   // ---- Feature 2: enable Log button only once every set row has weight + reps ----
   function isOutlier(weight, reps){
     const w = Number(weight), r = Number(reps);
-    return w < 0 || r < 0 || w > 300 || r > 50;
+    if(w < 0 || r < 0 || w > 300) return true;
+    if(ex.isTimed) return r > 1200; // 20 minutes — a genuinely unusual hold, not a normal plank
+    return r > 50;
   }
 
   function refreshLogBtnState(){
@@ -1118,6 +1131,38 @@ function renderExerciseCard(ex, day, i){
   }
   setRowsEl.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('input', refreshLogBtnState);
+  });
+
+  // Work timer — separate from the rest timer, counts UP while the set is
+  // being held (planks, wall sits) and fills the readonly duration field
+  // when stopped. Only rendered for ex.isTimed exercises.
+  setRowsEl.querySelectorAll('[data-role="work-timer-btn"]').forEach(btn=>{
+    let interval = null, elapsed = 0;
+    const durationInput = btn.closest('.set-row').querySelector('.duration-input');
+    btn.addEventListener('click', ()=>{
+      if(interval){
+        clearInterval(interval);
+        interval = null;
+        btn.innerHTML = `${icon('refresh',12)} Start`;
+      } else {
+        btn.innerHTML = `${icon('refresh',12)} Stop (${elapsed}s)`;
+        interval = setInterval(()=>{
+          elapsed++;
+          durationInput.value = elapsed;
+          btn.innerHTML = `${icon('refresh',12)} Stop (${elapsed}s)`;
+          refreshLogBtnState();
+        }, 1000);
+      }
+    });
+  });
+
+  // Per-side hint for unilateral exercises — updates live as reps are typed.
+  setRowsEl.querySelectorAll('[data-role="per-side-hint"]').forEach(hintEl=>{
+    const rInput = hintEl.previousElementSibling.querySelector('.r-input');
+    rInput.addEventListener('input', ()=>{
+      const total = Number(rInput.value);
+      hintEl.textContent = (rInput.value !== '' && total > 0) ? `${Math.floor(total/2)} per side` : '';
+    });
   });
 
   // Auto-advance weight -> reps -> RPE -> next row, and submit on Enter from
@@ -1254,7 +1299,8 @@ function renderExerciseCard(ex, day, i){
           muscle_group: ex.t,
           set_number: item.setNumber,
           weight_kg: Number(item.weight),
-          reps: Number(item.reps),
+          reps: ex.isTimed ? null : Number(item.reps),
+          duration_seconds: ex.isTimed ? Number(item.reps) : null,
           rpe: item.rpe !== '' ? Number(item.rpe) : null
         });
         if(result && result.is_pr) prHit = result;

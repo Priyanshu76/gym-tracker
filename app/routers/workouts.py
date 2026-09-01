@@ -71,6 +71,7 @@ def log_set(
         muscle_group=payload.muscle_group,
         set_number=payload.set_number,
         weight_kg=payload.weight_kg,
+        duration_seconds=payload.duration_seconds,
         reps=payload.reps,
         rpe=payload.rpe,
         set_type=payload.set_type,
@@ -181,6 +182,7 @@ def edit_workout_log(
     log.muscle_group = payload.muscle_group
     log.set_number = payload.set_number
     log.weight_kg = payload.weight_kg
+    log.duration_seconds = payload.duration_seconds
     log.reps = payload.reps
     log.rpe = payload.rpe
     log.set_type = payload.set_type
