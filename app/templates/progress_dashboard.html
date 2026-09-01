@@ -103,6 +103,11 @@
   .bw-msg{ font-size:12px; margin-bottom:8px; min-height:14px; }
   .bw-msg.ok{ color:var(--green); }
   .bw-msg.err{ color:var(--rust); }
+  .muscle-map-pair{ display:flex; justify-content:center; gap:24px; }
+  .muscle-map-col{ text-align:center; }
+  .muscle-map-label{ font-family:'JetBrains Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--steel); margin-bottom:6px; }
+  .muscle-map-figure{ width:110px; height:auto; }
+  .untrained-note{ font-size:11.5px; color:var(--steel); text-align:center; margin-top:14px; }
   .chart-note .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; border:2px solid var(--accent); background:transparent; vertical-align:middle; margin:0 4px; }
 
   .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:14px; }
@@ -268,6 +273,96 @@ function normalizeMuscleGroup(text){
   if(/ab|core/.test(t)) return 'Core';
   if(/full body/.test(t)) return 'Full Body';
   return 'Other';
+}
+
+// Finer-grained than normalizeMuscleGroup above — the muscle map needs to
+// tell biceps from triceps and quads from hamstrings, which the coarser
+// chart-grouping buckets deliberately collapse together.
+const MUSCLE_MAP_REGIONS = ['chest','shoulders','biceps','triceps','forearms','abs','lats','lowerback','glutes','quads','hamstrings','calves'];
+function toMuscleMapRegions(text){
+  const t = (text || '').toLowerCase();
+  const regions = [];
+  if(/chest/.test(t)) regions.push('chest');
+  if(/delt|shoulder/.test(t)) regions.push('shoulders');
+  if(/bicep/.test(t)) regions.push('biceps');
+  if(/tricep/.test(t)) regions.push('triceps');
+  if(/forearm|brachial/.test(t)) regions.push('forearms');
+  if(/\babs?\b|core/.test(t)) regions.push('abs');
+  if(/lower.?back/.test(t)) regions.push('lowerback');
+  else if(/\blats?\b|back|rhomboid|\brows?\b|\bpulls?\b/.test(t)) regions.push('lats'); // \b avoids "lat" inside "Lateral" and "row"/"pull" inside unrelated words
+  if(/glute/.test(t)) regions.push('glutes');
+  if(/quad/.test(t)) regions.push('quads');
+  if(/ham/.test(t)) regions.push('hamstrings');
+  if(/calv/.test(t)) regions.push('calves');
+  return regions; // empty for untrackable labels (e.g. "Full Body" conditioning work) — excluded, not zeroed
+}
+// Which regions render on the front figure vs the back figure.
+const FRONT_REGIONS = new Set(['chest','shoulders','biceps','forearms','abs','quads']);
+const BACK_REGIONS = new Set(['lats','lowerback','glutes','triceps','hamstrings','calves','shoulders','forearms']);
+
+// Maps a 0-1 trained-intensity value to a fill color along the app's own
+// palette — untrained stays neutral surface gray, heavily trained reaches
+// full accent color, rather than introducing a new color scale.
+function intensityColor(t){
+  if(t <= 0) return 'var(--surface-2)';
+  const clamped = Math.min(1, t);
+  // interpolate surface-2 (#26282a) -> accent (#16e0c5) in RGB space
+  const from = [0x26,0x28,0x2a], to = [0x16,0xe0,0xc5];
+  const rgb = from.map((c,i) => Math.round(c + (to[i]-c)*clamped));
+  return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+}
+
+// Simplified, stylized silhouettes (not anatomically precise) — built from
+// basic shapes rather than freehand paths, deliberately self-contained
+// (no external body-diagram asset) matching the icon system's own
+// no-external-dependency approach elsewhere in this app.
+function renderMuscleMapSVG(intensities){
+  const c = region => intensityColor(intensities[region] || 0);
+  const frontSvg = `
+    <svg viewBox="0 0 140 320" class="muscle-map-figure">
+      <ellipse cx="70" cy="25" rx="16" ry="18" fill="var(--surface-2)"/>
+      <rect x="63" y="40" width="14" height="10" fill="var(--surface-2)"/>
+      <ellipse cx="40" cy="58" rx="15" ry="12" fill="${c('shoulders')}"/>
+      <ellipse cx="100" cy="58" rx="15" ry="12" fill="${c('shoulders')}"/>
+      <rect x="44" y="52" width="52" height="36" rx="8" fill="${c('chest')}"/>
+      <rect x="49" y="88" width="42" height="42" rx="6" fill="${c('abs')}"/>
+      <rect x="20" y="58" width="16" height="38" rx="6" fill="${c('biceps')}"/>
+      <rect x="104" y="58" width="16" height="38" rx="6" fill="${c('biceps')}"/>
+      <rect x="17" y="96" width="14" height="34" rx="5" fill="${c('forearms')}"/>
+      <rect x="109" y="96" width="14" height="34" rx="5" fill="${c('forearms')}"/>
+      <rect x="48" y="130" width="44" height="22" rx="6" fill="var(--surface-2)"/>
+      <rect x="46" y="152" width="21" height="58" rx="7" fill="${c('quads')}"/>
+      <rect x="73" y="152" width="21" height="58" rx="7" fill="${c('quads')}"/>
+      <rect x="48" y="210" width="17" height="52" rx="6" fill="var(--surface-2)"/>
+      <rect x="75" y="210" width="17" height="52" rx="6" fill="var(--surface-2)"/>
+      <ellipse cx="56" cy="272" rx="10" ry="6" fill="var(--surface-2)"/>
+      <ellipse cx="84" cy="272" rx="10" ry="6" fill="var(--surface-2)"/>
+    </svg>`;
+  const backSvg = `
+    <svg viewBox="0 0 140 320" class="muscle-map-figure">
+      <ellipse cx="70" cy="25" rx="16" ry="18" fill="var(--surface-2)"/>
+      <rect x="63" y="40" width="14" height="10" fill="var(--surface-2)"/>
+      <ellipse cx="40" cy="58" rx="15" ry="12" fill="${c('shoulders')}"/>
+      <ellipse cx="100" cy="58" rx="15" ry="12" fill="${c('shoulders')}"/>
+      <rect x="44" y="52" width="52" height="40" rx="8" fill="${c('lats')}"/>
+      <rect x="49" y="92" width="42" height="24" rx="6" fill="${c('lowerback')}"/>
+      <rect x="46" y="58" width="16" height="38" rx="6" fill="${c('triceps')}"/>
+      <rect x="78" y="58" width="16" height="38" rx="6" fill="${c('triceps')}"/>
+      <rect x="17" y="96" width="14" height="34" rx="5" fill="${c('forearms')}"/>
+      <rect x="109" y="96" width="14" height="34" rx="5" fill="${c('forearms')}"/>
+      <rect x="48" y="116" width="44" height="30" rx="8" fill="${c('glutes')}"/>
+      <rect x="46" y="148" width="21" height="56" rx="7" fill="${c('hamstrings')}"/>
+      <rect x="73" y="148" width="21" height="56" rx="7" fill="${c('hamstrings')}"/>
+      <rect x="48" y="206" width="17" height="52" rx="6" fill="${c('calves')}"/>
+      <rect x="75" y="206" width="17" height="52" rx="6" fill="${c('calves')}"/>
+      <ellipse cx="56" cy="266" rx="10" ry="6" fill="var(--surface-2)"/>
+      <ellipse cx="84" cy="266" rx="10" ry="6" fill="var(--surface-2)"/>
+    </svg>`;
+  return `
+    <div class="muscle-map-pair">
+      <div class="muscle-map-col"><div class="muscle-map-label">Front</div>${frontSvg}</div>
+      <div class="muscle-map-col"><div class="muscle-map-label">Back</div>${backSvg}</div>
+    </div>`;
 }
 
 const GOAL_COPY = {
@@ -600,6 +695,23 @@ function renderOverview(target){
   const mgLabels = Object.keys(mgMap);
   const mgVals = mgLabels.map(k=>Math.round(mgMap[k]));
 
+  // muscle-map region volume — finer-grained than the donut chart above.
+  // A compound label like "Quads + Glutes" credits BOTH regions (split
+  // evenly) rather than just one, since exercises tagged that way
+  // genuinely work both muscles — squats shouldn't silently vanish from
+  // the quads region just because "glutes" also appears in the label.
+  const regionVolume = {};
+  mainRows.forEach(r=>{
+    const regions = toMuscleMapRegions(r.muscleGroup);
+    if(!regions.length) return;
+    const share = (r.weight*r.reps) / regions.length;
+    regions.forEach(region => { regionVolume[region] = (regionVolume[region]||0) + share; });
+  });
+  const maxRegionVolume = Math.max(1, ...Object.values(regionVolume));
+  const regionIntensity = {};
+  MUSCLE_MAP_REGIONS.forEach(region => { regionIntensity[region] = (regionVolume[region]||0) / maxRegionVolume; });
+  const untrainedRegions = MUSCLE_MAP_REGIONS.filter(region => !regionVolume[region]);
+
   // consistency calendar — always last 84 days regardless of range filter, so the shape of the grid is stable
   const today = new Date();
   const cells = [];
@@ -647,6 +759,14 @@ function renderOverview(target){
         </div>
         <div id="bw-msg" class="bw-msg"></div>
         ${BODY_METRICS.length ? '<div class="chart-wrap small"><canvas id="bwChart"></canvas></div>' : '<div class="chart-note">No body-weight entries logged yet.</div>'}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Muscle map <span style="color:var(--steel);font-weight:400;font-size:11px;text-transform:none;">— shaded by volume in this range</span></h2></div>
+      <div class="card">
+        ${renderMuscleMapSVG(regionIntensity)}
+        ${untrainedRegions.length ? `<div class="untrained-note">Not trained in this period: ${untrainedRegions.join(', ')}</div>` : ''}
       </div>
     </div>
 

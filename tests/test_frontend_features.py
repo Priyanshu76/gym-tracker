@@ -70,3 +70,11 @@ def test_dashboard_includes_body_weight_tracking():
     assert "bw-log-btn" in r.text
     assert "/api/body-metrics" in r.text
     assert "GOAL_WEIGHT_KG" in r.text
+
+
+def test_dashboard_includes_muscle_map():
+    client = TestClient(app)
+    r = client.get("/dashboard")
+    assert "renderMuscleMapSVG" in r.text
+    assert "toMuscleMapRegions" in r.text
+    assert "muscle-map-figure" in r.text
