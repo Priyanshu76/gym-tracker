@@ -43,6 +43,13 @@ class LogSetRequest(BaseModel):
         return v
 
 
+class LogSetResponse(BaseModel):
+    success: bool
+    message: str
+    is_pr: bool = False
+    pr_type: str | None = None  # "weight" or "estimated_1rm" — None when is_pr is False
+
+
 class WorkoutLogOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

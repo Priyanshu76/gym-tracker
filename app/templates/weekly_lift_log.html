@@ -1199,9 +1199,10 @@ function renderExerciseCard(ex, day, i){
     statusEl.className = 'log-status';
 
     let okCount = 0;
+    let prHit = null; // captures the first PR result across this batch of sets, if any
     for(const item of toSend){
       try{
-        await logSet({
+        const result = await logSet({
           workout_date: LOG_DATE,
           day_name: day.name,
           section: 'Main',
@@ -1213,6 +1214,7 @@ function renderExerciseCard(ex, day, i){
           reps: Number(item.reps),
           rpe: item.rpe !== '' ? Number(item.rpe) : null
         });
+        if(result && result.is_pr) prHit = result;
         item.row.classList.add('logged');
         okCount++;
       }catch(err){
@@ -1228,16 +1230,24 @@ function renderExerciseCard(ex, day, i){
       await setLocalDone(exId, true);
       startRestTimer(90);
 
+      const messages = [];
+      if(prHit){
+        const prLabel = prHit.pr_type === 'weight' ? 'New weight PR!' : 'New estimated 1RM PR!';
+        messages.push(`🎉 ${prLabel}`);
+      }
+
       const planExerciseId = card.dataset.planExerciseId;
       if(planExerciseId){
         try{
           const evalRes = await authFetch(`/api/plans/plan-exercises/${planExerciseId}/evaluate-progression`, { method:'POST' });
           if(evalRes.ok){
             const evalData = await evalRes.json();
-            if(evalData.note) showToast(evalData.note, null);
+            if(evalData.note) messages.push(evalData.note);
           }
         }catch(e){} // progression feedback is a nice-to-have — a failure here must never block the logged sets from counting
       }
+
+      if(messages.length) showToast(messages.join(' — '), null);
     } else {
       statusEl.textContent = `Logged ${okCount}/${toSend.length} — check connection and retry.`;
       statusEl.className = 'log-status err';

@@ -58,6 +58,14 @@ def test_log_page_includes_progression_wiring():
     assert "progression-note" in r.text
 
 
+def test_log_page_includes_pr_celebration():
+    client = TestClient(app)
+    r = client.get("/")
+    assert "prHit" in r.text
+    assert "is_pr" in r.text
+    assert "New weight PR" in r.text
+
+
 def test_dashboard_normalizes_muscle_group_taxonomy():
     client = TestClient(app)
     r = client.get("/dashboard")
