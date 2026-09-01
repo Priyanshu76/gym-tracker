@@ -12,6 +12,7 @@ class ProfileRequest(BaseModel):
     equipment_access: EquipmentAccess
     height_cm: float
     weight_kg: float
+    goal_weight_kg: float | None = None
     age: int
     days_per_week: int
     injuries_limitations: str | None = None
@@ -28,6 +29,13 @@ class ProfileRequest(BaseModel):
     def validate_weight(cls, v):
         if not (30 <= v <= 300):
             raise ValueError("Weight must be between 30 and 300 kg.")
+        return v
+
+    @field_validator("goal_weight_kg")
+    @classmethod
+    def validate_goal_weight(cls, v):
+        if v is not None and not (30 <= v <= 300):
+            raise ValueError("Goal weight must be between 30 and 300 kg.")
         return v
 
     @field_validator("age")
@@ -53,6 +61,7 @@ class ProfileOut(BaseModel):
     equipment_access: EquipmentAccess
     height_cm: float
     weight_kg: float
+    goal_weight_kg: float | None
     age: int
     days_per_week: int
     injuries_limitations: str | None

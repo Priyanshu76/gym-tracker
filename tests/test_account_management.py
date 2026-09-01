@@ -146,3 +146,9 @@ def test_profile_page_includes_account_management_ui():
     assert 'id="delete-account-btn"' in r.text
     assert "/api/change-password" in r.text
     assert "/api/account/delete" in r.text
+
+
+def test_profile_page_includes_goal_weight_field():
+    client = TestClient(app)
+    r = client.get("/profile")
+    assert 'id="goal_weight_kg"' in r.text

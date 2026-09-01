@@ -80,6 +80,10 @@
         <input type="number" id="weight_kg" min="30" max="300" step="0.1" required>
       </div>
     </div>
+    <div class="field">
+      <label for="goal_weight_kg">Goal weight (kg) — optional</label>
+      <input type="number" id="goal_weight_kg" min="30" max="300" step="0.1" placeholder="Leave blank if you don't have one">
+    </div>
     <div class="row-2">
       <div class="field">
         <label for="age">Age</label>
@@ -149,6 +153,7 @@ async function checkMe(){
         document.getElementById('equipment_access').value = p.equipment_access;
         document.getElementById('height_cm').value = p.height_cm;
         document.getElementById('weight_kg').value = p.weight_kg;
+        document.getElementById('goal_weight_kg').value = p.goal_weight_kg ?? '';
         document.getElementById('age').value = p.age;
         document.getElementById('days_per_week').value = p.days_per_week;
         document.getElementById('injuries_limitations').value = p.injuries_limitations || '';
@@ -181,6 +186,7 @@ form.addEventListener('submit', async (e)=>{
     equipment_access: document.getElementById('equipment_access').value,
     height_cm: Number(document.getElementById('height_cm').value),
     weight_kg: Number(document.getElementById('weight_kg').value),
+    goal_weight_kg: document.getElementById('goal_weight_kg').value !== '' ? Number(document.getElementById('goal_weight_kg').value) : null,
     age: Number(document.getElementById('age').value),
     days_per_week: Number(document.getElementById('days_per_week').value),
     injuries_limitations: document.getElementById('injuries_limitations').value.trim() || null,

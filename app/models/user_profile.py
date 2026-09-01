@@ -43,6 +43,7 @@ class UserProfile(Base):
 
     height_cm: Mapped[float] = mapped_column(Numeric(5, 1), nullable=False)
     weight_kg: Mapped[float] = mapped_column(Numeric(5, 1), nullable=False)
+    goal_weight_kg: Mapped[float | None] = mapped_column(Numeric(5, 1), nullable=True)
     age: Mapped[int] = mapped_column(Integer, nullable=False)
 
     days_per_week: Mapped[int] = mapped_column(Integer, nullable=False)  # 3-6, drives split selection

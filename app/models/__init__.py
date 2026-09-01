@@ -2,6 +2,7 @@
 Import every model here so Base.metadata is fully populated — Alembic's
 autogenerate relies on this to detect the full schema.
 """
+from app.models.body_metric_log import BodyMetricLog  # noqa: F401
 from app.models.custom_exercise import CustomExercise  # noqa: F401
 from app.models.exercise import Exercise  # noqa: F401
 from app.models.pending_signup import PendingSignup  # noqa: F401

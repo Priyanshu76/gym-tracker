@@ -96,6 +96,13 @@
   .chart-wrap{ position:relative; height:260px; }
   .chart-wrap.small{ height:220px; }
   .chart-note{ font-size:11px; color:var(--steel); margin-top:10px; text-align:center; }
+  .bw-log-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .bw-log-row input{ flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:14px; padding:9px 12px; }
+  .bw-log-row input:focus{ outline:none; border-color:var(--accent); }
+  .bw-log-row button{ display:flex; align-items:center; gap:5px; background:var(--accent); color:#0a1512; border:none; border-radius:6px; padding:9px 14px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer; flex:none; }
+  .bw-msg{ font-size:12px; margin-bottom:8px; min-height:14px; }
+  .bw-msg.ok{ color:var(--green); }
+  .bw-msg.err{ color:var(--rust); }
   .chart-note .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; border:2px solid var(--accent); background:transparent; vertical-align:middle; margin:0 4px; }
 
   .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:14px; }
@@ -244,6 +251,8 @@ const CHART_COLORS = ['#16e0c5', '#6f9c6a', '#b0472f', '#8aa8c9', '#c98ac0', '#9
 
 let ALL_ROWS = [];
 let USER_GOAL = null;
+let BODY_METRICS = [];
+let GOAL_WEIGHT_KG = null;
 
 // Rolls up the free-text muscle_group label (which fragments into near-
 // duplicates like "Upper Chest" / "Overall Chest" / "Chest Isolation")
@@ -458,8 +467,16 @@ async function load(){
     const profileRes = await authFetch('/api/profile');
     if(profileRes.ok){
       const profile = await profileRes.json();
-      if(profile) USER_GOAL = profile.goal;
+      if(profile){
+        USER_GOAL = profile.goal;
+        GOAL_WEIGHT_KG = profile.goal_weight_kg;
+      }
     }
+  }catch(e){}
+
+  try{
+    const bmRes = await authFetch('/api/body-metrics');
+    if(bmRes.ok) BODY_METRICS = await bmRes.json();
   }catch(e){}
 
   if(typeof Chart === 'undefined'){
@@ -622,6 +639,18 @@ function renderOverview(target){
     </div>
 
     <div class="section">
+      <div class="section-head"><h2>Body weight</h2></div>
+      <div class="card">
+        <div class="bw-log-row">
+          <input type="number" id="bw-input" placeholder="Log today's weight (kg)" min="30" max="300" step="0.1">
+          <button id="bw-log-btn">${icon('plus',14)} Log</button>
+        </div>
+        <div id="bw-msg" class="bw-msg"></div>
+        ${BODY_METRICS.length ? '<div class="chart-wrap small"><canvas id="bwChart"></canvas></div>' : '<div class="chart-note">No body-weight entries logged yet.</div>'}
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-head"><h2>Volume by muscle group</h2></div>
       <div class="card"><div class="chart-wrap small"><canvas id="mgChart"></canvas></div></div>
       ${mgLabels.length===0 ? '<div class="chart-note">No main-lift sets in this date range yet.</div>' : ''}
@@ -647,6 +676,65 @@ function renderOverview(target){
       }
     });
   }
+
+  if(BODY_METRICS.length){
+    const bwLabels = BODY_METRICS.map(m => new Date(m.logged_at).toLocaleDateString(undefined, {month:'short', day:'numeric'}));
+    const bwValues = BODY_METRICS.map(m => m.weight_kg);
+    // Colors each point by whether it moved TOWARD or AWAY from the goal
+    // weight relative to the previous entry — first point is always neutral,
+    // since there's nothing to compare it against.
+    const pointColors = bwValues.map((w, i) => {
+      if(i === 0 || GOAL_WEIGHT_KG == null) return 'var(--accent)';
+      const prev = bwValues[i-1];
+      const movedToward = Math.abs(w - GOAL_WEIGHT_KG) < Math.abs(prev - GOAL_WEIGHT_KG);
+      return movedToward ? 'var(--green)' : 'var(--rust)';
+    });
+    const datasets = [{
+      label: 'Body weight (kg)', data: bwValues, borderColor: 'var(--accent)',
+      pointBackgroundColor: pointColors, pointBorderColor: pointColors, pointRadius: 4, tension: 0.2, fill: false,
+    }];
+    if(GOAL_WEIGHT_KG != null){
+      datasets.push({
+        label: 'Goal', data: bwValues.map(()=>GOAL_WEIGHT_KG), borderColor: 'var(--steel)',
+        borderDash: [6,4], pointRadius: 0, fill: false,
+      });
+    }
+    charts.bw = new Chart(document.getElementById('bwChart'), {
+      type: 'line',
+      data: { labels: bwLabels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: GOAL_WEIGHT_KG != null, labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: { y: { ticks: { callback: v => `${v}kg` } } },
+      },
+    });
+  }
+
+  const bwInput = document.getElementById('bw-input');
+  const bwMsg = document.getElementById('bw-msg');
+  document.getElementById('bw-log-btn').addEventListener('click', async ()=>{
+    const weight = Number(bwInput.value);
+    if(!bwInput.value || isNaN(weight) || weight < 30 || weight > 300){
+      bwMsg.textContent = 'Enter a weight between 30 and 300 kg.';
+      bwMsg.className = 'bw-msg err';
+      return;
+    }
+    try{
+      const res = await authFetch('/api/body-metrics', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weight_kg: weight }),
+      });
+      if(!res.ok) throw new Error('failed');
+      bwMsg.textContent = 'Logged!';
+      bwMsg.className = 'bw-msg ok';
+      const bmRes = await authFetch('/api/body-metrics');
+      if(bmRes.ok) BODY_METRICS = await bmRes.json();
+      renderTab();
+    }catch(e){
+      bwMsg.textContent = 'Could not log — check your connection.';
+      bwMsg.className = 'bw-msg err';
+    }
+  });
 }
 
 // ==================================================================
