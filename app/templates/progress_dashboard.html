@@ -51,8 +51,40 @@
   [data-accent="green"]{ --accent: #4ade80; }
   [data-accent="yellow"]{ --accent: #fbbf24; }
   *{box-sizing:border-box;}
-  body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; }
+  body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased; padding-bottom:76px; }
   .wrap{ max-width:920px; margin:0 auto; padding:20px 16px 60px; }
+
+  .app-topbar{
+    position:sticky; top:0; z-index:25;
+    background:rgba(31,32,34,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  [data-theme="light"] .app-topbar{ background:rgba(255,255,255,.92); }
+  .app-topbar-inner{ max-width:920px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .app-name{ font-family:'Oswald', sans-serif; font-weight:700; text-transform:uppercase; font-size:16px; letter-spacing:.06em; color:var(--chalk); }
+  .app-topbar-right{ display:flex; align-items:center; gap:10px; }
+  .app-icon-btn{
+    width:36px; height:36px; border-radius:50%; background:var(--surface-2);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    color:var(--chalk); text-decoration:none; transition:border-color .15s ease, color .15s ease;
+  }
+  .app-icon-btn:hover{ border-color:var(--accent); color:var(--accent); }
+
+  .app-tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:25;
+    display:flex; background:rgba(31,32,34,.96); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom);
+  }
+  [data-theme="light"] .app-tabbar{ background:rgba(255,255,255,.96); }
+  .app-tab{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:9px 4px 8px; text-decoration:none; color:var(--steel);
+    font-family:'JetBrains Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:.03em;
+    transition:color .15s ease;
+  }
+  .app-tab.active{ color:var(--accent); }
+  .app-tab:active{ opacity:.6; }
+  .page-head{ margin-bottom:16px; }
 
   header{ margin-bottom:16px; }
   .header-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -206,18 +238,30 @@
 <script src="/static/js/icons.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <p class="eyebrow">Progress Dashboard</p>
-    <div class="header-top">
-      <a class="nav-link" href="/">← Back</a>
-      <h1>How the training is trending</h1>
-      <span><a class="nav-link" href="/logs">Workout Logs →</a><button class="logout-btn" id="logout-btn" style="display:none;">Log out</button></span>
+<header class="app-topbar">
+  <div class="app-topbar-inner">
+    <span class="app-name">Gym Tracker</span>
+    <div class="app-topbar-right">
+      <a href="/admin" class="app-icon-btn" aria-label="Admin" id="admin-nav-link" style="display:none;"></a>
+      <a href="/profile" class="app-icon-btn" aria-label="Profile"></a>
     </div>
-  </header>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>How the training is trending</h1>
+  </div>
 
   <div id="root"><div class="state-msg">Loading your logged sets…</div></div>
 </div>
+
+<nav class="app-tabbar">
+  <a href="/" class="app-tab">Log</a>
+  <a href="/dashboard" class="app-tab active">Stats</a>
+  <a href="/plans" class="app-tab">Plan</a>
+  <a href="/logs" class="app-tab">History</a>
+</nav>
 
 <div class="auth-overlay" id="auth-overlay">
   <div class="auth-box">
@@ -524,11 +568,6 @@ async function authFetch(path, opts={}){
   return res;
 }
 
-document.getElementById('logout-btn').addEventListener('click', async ()=>{
-  try{ await fetch('/api/logout', { method:'POST' }); }catch(e){}
-  location.reload();
-});
-
 function isoWeek(dateStr){
   const d = new Date(dateStr + 'T00:00:00');
   const target = new Date(d.valueOf());
@@ -570,7 +609,7 @@ function animateNumber(el, target, suffix=''){
 async function load(){
   const auth = await ensureAuthed();
   if(!auth.has_profile){ location.href = '/onboarding'; return; }
-  document.getElementById('logout-btn').style.display = 'inline-block';
+  if(auth.is_admin){ document.getElementById('admin-nav-link').style.display = 'flex'; }
 
   try{
     const profileRes = await authFetch('/api/profile');

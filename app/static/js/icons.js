@@ -92,6 +92,26 @@ function applyStandardIcons(){
     btn.style.gap = '4px';
     btn.dataset.iconApplied = 'true';
   });
+
+  // Icon-only round buttons in the app-shell top bar (profile/admin) — no
+  // text label, just the icon, sized larger than inline nav-link icons.
+  const ICON_BTN_MAP = { '/profile': 'user', '/admin': 'lock', '/': 'dumbbell', '/dashboard': 'chart', '/logs': 'list', '/plans': 'calendar' };
+  document.querySelectorAll('.app-icon-btn').forEach(a => {
+    if (a.dataset.iconApplied) return;
+    const name = ICON_BTN_MAP[a.getAttribute('href')] || 'user';
+    a.innerHTML = icon(name, 18);
+    a.dataset.iconApplied = 'true';
+  });
+
+  // Bottom tab bar entries — icon above a short label, matching native
+  // mobile tab-bar conventions. Reads the same href map as the icon buttons.
+  document.querySelectorAll('.app-tab').forEach(a => {
+    if (a.dataset.iconApplied) return;
+    const name = ICON_BTN_MAP[a.getAttribute('href')] || 'dumbbell';
+    const label = a.textContent.trim();
+    a.innerHTML = `${icon(name, 20)}<span>${label}</span>`;
+    a.dataset.iconApplied = 'true';
+  });
 }
 
 document.addEventListener('DOMContentLoaded', applyStandardIcons);

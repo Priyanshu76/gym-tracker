@@ -34,12 +34,61 @@
   [data-accent="green"]{ --accent: #4ade80; }
   [data-accent="yellow"]{ --accent: #fbbf24; }
   *{box-sizing:border-box;}
+
+  /* ---- App shell: top bar ---- */
+  .app-topbar{
+    position:sticky; top:0; z-index:25;
+    background:rgba(31,32,34,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  [data-theme="light"] .app-topbar{ background:rgba(255,255,255,.92); }
+  .app-topbar-inner{
+    max-width:760px; margin:0 auto; padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .app-name{
+    font-family:'Oswald', sans-serif; font-weight:700; text-transform:uppercase;
+    font-size:16px; letter-spacing:.06em; color:var(--chalk);
+  }
+  .app-topbar-right{ display:flex; align-items:center; gap:10px; }
+  .app-icon-btn{
+    width:36px; height:36px; border-radius:50%; background:var(--surface-2);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    color:var(--chalk); text-decoration:none; transition:border-color .15s ease, color .15s ease;
+  }
+  .app-icon-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .conn-dot{ width:8px; height:8px; border-radius:50%; background:var(--steel); flex:none; }
+  .conn-dot.ok{ background:var(--green); }
+  .conn-dot.bad{ background:var(--rust); }
+
+  /* ---- App shell: bottom tab bar ---- */
+  .app-tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:25;
+    display:flex; background:rgba(31,32,34,.96); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom);
+  }
+  [data-theme="light"] .app-tabbar{ background:rgba(255,255,255,.96); }
+  .app-tab{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:9px 4px 8px; text-decoration:none; color:var(--steel);
+    font-family:'JetBrains Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:.03em;
+    transition:color .15s ease;
+  }
+  .app-tab.active{ color:var(--accent); }
+  .app-tab:active{ opacity:.6; }
+
+  .page-head{ padding:18px 0 4px; }
+  .page-date{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--steel); }
+  .page-head h1{ margin:4px 0 0; }
+  .page-plan-label{ font-size:11px; color:var(--accent); font-family:'JetBrains Mono', monospace; margin-top:4px; display:inline-block; }
+
   body{
     margin:0;
     background:var(--bg);
     color:var(--chalk);
     font-family:'Inter', sans-serif;
     -webkit-font-smoothing:antialiased;
+    padding-bottom:76px; /* clears the fixed bottom tab bar */
   }
   ::selection{ background:var(--accent); color:#1a1a1a; }
 
@@ -275,7 +324,7 @@
   .toast-undo:hover{ background:var(--accent); color:#0a1512; }
 
   .rest-timer{
-    position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-20px);
+    position:fixed; top:72px; left:50%; transform:translateX(-50%) translateY(-20px);
     background:var(--surface-2); border:1px solid var(--accent); border-radius:20px;
     padding:8px 10px 8px 16px; display:flex; align-items:center; gap:10px;
     font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--chalk);
@@ -337,20 +386,23 @@
 </head>
 <body>
 
-<div class="wrap">
-  <header>
-    <p class="eyebrow">
-      <span id="today-date">—</span>
-      <span class="user-badge"><span class="conn-dot" id="conn-dot"></span><span id="conn-text">checking…</span><span class="who" id="user-who"></span><button class="logout-btn" id="logout-btn" style="display:none;">Log out</button></span>
-    </p>
-    <div class="header-top">
-      <h1>Weekly Lift Log</h1>
-      <a class="nav-link" href="/plans" id="plan-mode-label">My Plan</a>
-      <a class="nav-link" href="/profile">Profile</a>
-      <a class="nav-link" href="/admin" id="admin-nav-link" style="display:none;">Admin</a>
-      <a class="nav-link" href="/dashboard">Dashboard →</a>
+<header class="app-topbar">
+  <div class="app-topbar-inner">
+    <span class="app-name">Gym Tracker</span>
+    <div class="app-topbar-right">
+      <span class="conn-dot" id="conn-dot" title="Connection status"></span>
+      <a href="/admin" class="app-icon-btn" aria-label="Admin" id="admin-nav-link" style="display:none;"></a>
+      <a href="/profile" class="app-icon-btn" aria-label="Profile" id="profile-icon-btn"></a>
     </div>
-  </header>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="page-head">
+    <span class="page-date" id="today-date">—</span>
+    <h1>Weekly Lift Log</h1>
+    <span class="page-plan-label" id="plan-mode-label" style="display:none;"></span>
+  </div>
 
   <div class="rack" id="rack"></div>
 
@@ -776,11 +828,6 @@ async function authFetch(path, opts={}){
   }
   return res;
 }
-
-document.getElementById('logout-btn').addEventListener('click', async ()=>{
-  try{ await fetch('/api/logout', { method:'POST' }); }catch(e){}
-  location.reload();
-});
 
 function totalSets(day){ return day.exercises.reduce((s,e)=>s+e.sets,0); }
 
@@ -1551,14 +1598,11 @@ drawerBg.addEventListener('click', closeDrawer);
     location.href = '/onboarding';
     return;
   }
-  document.getElementById('user-who').textContent = CURRENT_USER.display_name || '';
-  if(CURRENT_USER.is_admin){ document.getElementById('admin-nav-link').style.display = 'inline-block'; }
-  document.getElementById('logout-btn').style.display = 'inline-block';
+  if(CURRENT_USER.is_admin){ document.getElementById('admin-nav-link').style.display = 'flex'; }
 
   // If we got this far, /api/me already succeeded — that's proof enough the
   // server is reachable and the session is valid, no separate ping needed.
   document.getElementById('conn-dot').className = 'conn-dot ok';
-  document.getElementById('conn-text').textContent = 'connected';
 
   // If the user has activated a generated plan, use it instead of the classic one.
   try{
@@ -1567,7 +1611,9 @@ drawerBg.addEventListener('click', closeDrawer);
       const activePlan = await planRes.json();
       if(activePlan){
         DATA = transformGeneratedPlan(activePlan);
-        document.getElementById('plan-mode-label').textContent = `Using: ${activePlan.name}`;
+        const planLabel = document.getElementById('plan-mode-label');
+        planLabel.textContent = `Using: ${activePlan.name}`;
+        planLabel.style.display = 'inline-block';
       }
     }
   }catch(e){}
@@ -1616,5 +1662,11 @@ drawerBg.addEventListener('click', closeDrawer);
   }
 })();
 </script>
+<nav class="app-tabbar">
+  <a href="/" class="app-tab active">Log</a>
+  <a href="/dashboard" class="app-tab">Stats</a>
+  <a href="/plans" class="app-tab">Plan</a>
+  <a href="/logs" class="app-tab">History</a>
+</nav>
 </body>
 </html>
