@@ -8,7 +8,7 @@ authentication internals).
 import uuid
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as DBSession
 
@@ -109,6 +109,67 @@ class PlanImportRequest(BaseModel):
     name: str
     default_progression_rule: str = "linear"
     days: list[dict]
+
+
+@router.post("/workout-history/import")
+async def import_workout_history(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """
+    Bulk-imports workout history from another tracker's CSV export.
+    Auto-detects FitNotes, Strong, or Hevy format from the header row —
+    each confirmed against real sample exports (see app/services/importers.py).
+    Every imported row lands in section='Main'; exercise names are stored
+    exactly as they appeared in the source file (WorkoutLog.exercise is
+    already a free-text field, so no library-matching step is needed here,
+    unlike plan import which does need to resolve real Exercise rows).
+    """
+    import csv
+    import io
+
+    from app.models.exercise import Exercise
+    from app.services.importers import PARSERS, detect_source
+
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Could not read this file as UTF-8 text — is it a CSV export?")
+
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames:
+        raise HTTPException(status_code=400, detail="Empty or unreadable CSV file.")
+
+    source = detect_source(list(reader.fieldnames))
+    if not source:
+        raise HTTPException(
+            status_code=400,
+            detail="Unrecognized file format — this importer supports FitNotes, Strong, and Hevy CSV exports.",
+        )
+
+    rows = list(reader)
+    imported_sets = PARSERS[source](rows)
+    if not imported_sets:
+        return {"success": True, "detected_source": source, "imported_count": 0, "message": "No valid rows found in the file."}
+
+    # Best-effort muscle_group enrichment by exact exercise-name match
+    # against the shared library — not required for the import to
+    # succeed, just a nice-to-have when the name happens to match exactly.
+    exercise_lookup = {ex.name: ex.muscle_group for ex in db.query(Exercise).all()}
+
+    for s in imported_sets:
+        db.add(WorkoutLog(
+            user_id=user.id, workout_date=s.workout_date, day_name=s.workout_date.strftime("%A"),
+            section="Main", exercise=s.exercise_name, muscle_group=exercise_lookup.get(s.exercise_name),
+            set_number=s.set_number, weight_kg=s.weight_kg, reps=s.reps,
+            duration_seconds=s.duration_seconds, rpe=s.rpe, set_type=s.set_type,
+            metrics={"imported_notes": s.notes} if s.notes else None,
+        ))
+    db.commit()
+
+    return {"success": True, "detected_source": source, "imported_count": len(imported_sets)}
 
 
 @router.post("/plans/import")

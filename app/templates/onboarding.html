@@ -154,6 +154,10 @@
 
     <button type="button" id="export-data-btn" style="width:100%; padding:11px; margin-bottom:12px; border:1px solid var(--line); background:none; color:var(--chalk); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Export my data (JSON)</button>
 
+    <input type="file" id="import-history-input" accept=".csv" style="display:none;">
+    <button type="button" id="import-history-btn" style="width:100%; padding:11px; margin-bottom:8px; border:1px solid var(--line); background:none; color:var(--chalk); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Import history (FitNotes / Strong / Hevy)</button>
+    <div id="import-history-msg" class="msg" style="margin-bottom:12px;"></div>
+
     <button type="button" id="delete-account-btn" style="width:100%; padding:11px; border:1px solid var(--rust); background:none; color:var(--rust); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Delete my account</button>
     <div class="msg" id="delete-msg"></div>
   </div>
@@ -330,6 +334,34 @@ document.getElementById('export-data-btn').addEventListener('click', async ()=>{
   }catch(e){
     alert('Could not export your data — check your connection and try again.');
   }
+});
+
+document.getElementById('import-history-btn').addEventListener('click', ()=>{
+  document.getElementById('import-history-input').click();
+});
+document.getElementById('import-history-input').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const msgEl = document.getElementById('import-history-msg');
+  msgEl.textContent = 'Importing…';
+  msgEl.className = 'msg';
+  try{
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/export/workout-history/import', { method:'POST', body: formData });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      msgEl.textContent = data.detail || 'Could not import this file.';
+      msgEl.className = 'msg err';
+      return;
+    }
+    msgEl.textContent = `Detected ${data.detected_source} format — imported ${data.imported_count} set(s).`;
+    msgEl.className = 'msg ok';
+  }catch(err){
+    msgEl.textContent = 'Could not reach the server — check your connection.';
+    msgEl.className = 'msg err';
+  }
+  e.target.value = '';
 });
 
 document.getElementById('delete-account-btn').addEventListener('click', async ()=>{

@@ -152,3 +152,10 @@ def test_profile_page_includes_goal_weight_field():
     client = TestClient(app)
     r = client.get("/profile")
     assert 'id="goal_weight_kg"' in r.text
+
+
+def test_profile_page_includes_import_history_ui():
+    client = TestClient(app)
+    r = client.get("/profile")
+    assert 'id="import-history-btn"' in r.text
+    assert "/api/export/workout-history/import" in r.text
