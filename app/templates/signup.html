@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="/static/js/theme.js"></script>
 <title>Sign Up — Gym Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -11,6 +12,19 @@
     --bg: #17181a; --surface: #1f2022; --surface-2: #26282a; --line: #35373a;
     --chalk: #f2efe7; --steel: #9aa0a6; --accent: #16e0c5; --rust: #b0472f; --green: #6f9c6a;
   }
+
+  [data-theme="light"]{
+    --bg: #f7f6f2; --surface: #ffffff; --surface-2: #eeece6; --line: #ddd9d0;
+    --chalk: #1f2022; --steel: #6b6f76; --rust: #c0392b; --green: #3d7a4a; --blue: #3d6199;
+  }
+  [data-accent="teal"]{ --accent: #16e0c5; }
+  [data-accent="blue"]{ --accent: #4a9eff; }
+  [data-accent="purple"]{ --accent: #a78bfa; }
+  [data-accent="pink"]{ --accent: #f472b6; }
+  [data-accent="orange"]{ --accent: #fb923c; }
+  [data-accent="coral"]{ --accent: #f87171; }
+  [data-accent="green"]{ --accent: #4ade80; }
+  [data-accent="yellow"]{ --accent: #fbbf24; }
   *{box-sizing:border-box;}
   body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased;
         min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }

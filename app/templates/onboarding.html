@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="/static/js/theme.js"></script>
 <title>Set up your profile — Gym Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -11,6 +12,19 @@
     --bg: #17181a; --surface: #1f2022; --surface-2: #26282a; --line: #35373a;
     --chalk: #f2efe7; --steel: #9aa0a6; --accent: #16e0c5; --rust: #b0472f; --green: #6f9c6a;
   }
+
+  [data-theme="light"]{
+    --bg: #f7f6f2; --surface: #ffffff; --surface-2: #eeece6; --line: #ddd9d0;
+    --chalk: #1f2022; --steel: #6b6f76; --rust: #c0392b; --green: #3d7a4a; --blue: #3d6199;
+  }
+  [data-accent="teal"]{ --accent: #16e0c5; }
+  [data-accent="blue"]{ --accent: #4a9eff; }
+  [data-accent="purple"]{ --accent: #a78bfa; }
+  [data-accent="pink"]{ --accent: #f472b6; }
+  [data-accent="orange"]{ --accent: #fb923c; }
+  [data-accent="coral"]{ --accent: #f87171; }
+  [data-accent="green"]{ --accent: #4ade80; }
+  [data-accent="yellow"]{ --accent: #fbbf24; }
   *{box-sizing:border-box;}
   body{ margin:0; background:var(--bg); color:var(--chalk); font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased;
         min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
@@ -107,6 +121,21 @@
     <div class="msg" id="msg"></div>
   </form>
 
+  <div id="appearance-section" style="display:none; margin-top:28px; padding-top:20px; border-top:1px solid var(--line);">
+    <p class="eyebrow" style="margin-bottom:12px;">Appearance</p>
+    <div class="field">
+      <label>Theme</label>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="theme-btn" data-role="theme-dark" data-theme-value="dark" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--line); background:var(--surface-2); color:var(--chalk); cursor:pointer; font-family:'Inter',sans-serif; font-size:13px;">Dark</button>
+        <button type="button" class="theme-btn" data-role="theme-light" data-theme-value="light" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--line); background:var(--surface-2); color:var(--chalk); cursor:pointer; font-family:'Inter',sans-serif; font-size:13px;">Light</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Accent color</label>
+      <div id="accent-swatches" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
   <div id="account-section" style="display:none; margin-top:28px; padding-top:20px; border-top:1px solid var(--line);">
     <p class="eyebrow" style="margin-bottom:12px;">Account</p>
 
@@ -150,6 +179,8 @@ async function checkMe(){
         document.getElementById('page-sub').textContent = 'Update your goals and preferences any time.';
         document.getElementById('back-link').style.display = 'inline-block';
         document.getElementById('account-section').style.display = 'block';
+        document.getElementById('appearance-section').style.display = 'block';
+        initAppearanceControls();
         document.getElementById('goal').value = p.goal;
         document.getElementById('experience_level').value = p.experience_level;
         document.getElementById('equipment_access').value = p.equipment_access;
@@ -255,6 +286,34 @@ pwForm.addEventListener('submit', async (e)=>{
 
 // ---------------- Delete account ----------------
 // ---------------- Export data ----------------
+// ---------------- Appearance ----------------
+function initAppearanceControls(){
+  const darkBtn = document.querySelector('[data-role="theme-dark"]');
+  const lightBtn = document.querySelector('[data-role="theme-light"]');
+  function refreshThemeButtons(){
+    const current = getTheme();
+    darkBtn.style.borderColor = current === 'dark' ? 'var(--accent)' : 'var(--line)';
+    lightBtn.style.borderColor = current === 'light' ? 'var(--accent)' : 'var(--line)';
+  }
+  darkBtn.addEventListener('click', ()=>{ setTheme('dark'); refreshThemeButtons(); });
+  lightBtn.addEventListener('click', ()=>{ setTheme('light'); refreshThemeButtons(); });
+  refreshThemeButtons();
+
+  const swatchContainer = document.getElementById('accent-swatches');
+  swatchContainer.innerHTML = ACCENT_COLORS.map(a => `
+    <button type="button" data-accent-value="${a.id}" title="${a.label}"
+      style="width:32px; height:32px; border-radius:50%; background:${a.hex}; cursor:pointer; border:2px solid ${getAccent()===a.id ? 'var(--chalk)' : 'transparent'};"></button>
+  `).join('');
+  swatchContainer.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setAccent(btn.dataset.accentValue);
+      swatchContainer.querySelectorAll('button').forEach(b=> b.style.border = '2px solid transparent');
+      btn.style.border = '2px solid var(--chalk)';
+      refreshThemeButtons(); // accent affects the button highlight color too
+    });
+  });
+}
+
 document.getElementById('export-data-btn').addEventListener('click', async ()=>{
   try{
     const res = await fetch('/api/export/full');
