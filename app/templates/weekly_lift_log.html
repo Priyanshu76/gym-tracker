@@ -333,6 +333,7 @@
       <h1>Weekly Lift Log</h1>
       <a class="nav-link" href="/plans" id="plan-mode-label">My Plan</a>
       <a class="nav-link" href="/profile">Profile</a>
+      <a class="nav-link" href="/admin" id="admin-nav-link" style="display:none;">Admin</a>
       <a class="nav-link" href="/dashboard">Dashboard →</a>
     </div>
   </header>
@@ -1537,6 +1538,7 @@ drawerBg.addEventListener('click', closeDrawer);
     return;
   }
   document.getElementById('user-who').textContent = CURRENT_USER.display_name || '';
+  if(CURRENT_USER.is_admin){ document.getElementById('admin-nav-link').style.display = 'inline-block'; }
   document.getElementById('logout-btn').style.display = 'inline-block';
 
   // If we got this far, /api/me already succeeded — that's proof enough the

@@ -19,6 +19,8 @@ class User(Base):
 
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     must_reset_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_disabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     reset_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
     reset_token_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

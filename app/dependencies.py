@@ -51,5 +51,28 @@ def get_current_user(
     user = db.query(User).filter(User.id == uuid.UUID(user_id)).first()
     if not user:
         raise unauthorized
+    if user.is_disabled:
+        # Disabling an account should end their access immediately, not just
+        # block future logins — an already-active session must stop working too.
+        raise unauthorized
 
+    return user
+
+
+def get_current_admin_user(user: User = Depends(get_current_user), db: DBSession = Depends(get_db)) -> User:
+    """
+    Self-healing bootstrap: the user whose email matches settings.admin_email
+    is treated as admin even before is_admin is explicitly set — so the very
+    first deployment doesn't need a manual DB edit just to see the dashboard.
+    Every other account needs is_admin=True set by an existing admin.
+    """
+    from app.config import get_settings
+
+    settings = get_settings()
+    if user.email == settings.admin_email and not user.is_admin:
+        user.is_admin = True
+        db.commit()
+
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     return user

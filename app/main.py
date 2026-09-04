@@ -73,6 +73,11 @@ def plan_selection_page(request: Request):
     return templates.TemplateResponse(request, "plan_selection.html")
 
 
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page(request: Request):
+    return templates.TemplateResponse(request, "admin.html")
+
+
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)):
     """Verifies the app is up AND can reach Postgres — not just that the process is alive."""

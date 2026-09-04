@@ -102,13 +102,16 @@ def get_me(user: User = Depends(get_current_user), db: DBSession = Depends(get_d
     means "show the login screen." has_profile drives the forced onboarding
     gate the same way must_reset_password drives the forced password reset.
     """
+    from app.config import get_settings
     from app.models.user_profile import UserProfile
 
+    settings = get_settings()
     has_profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first() is not None
     return {
         "username": user.username,
         "display_name": user.display_name,
         "must_reset_password": user.must_reset_password,
+        "is_admin": user.is_admin or user.email == settings.admin_email,
         "has_profile": has_profile,
     }
 
@@ -230,6 +233,8 @@ def login(payload: LoginRequest, response: Response, db: DBSession = Depends(get
     user = db.query(User).filter(User.username == payload.username).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise invalid
+    if user.is_disabled:
+        raise HTTPException(status_code=403, detail="This account has been disabled. Contact the site owner for help.")
 
     jti = str(uuid.uuid4())
     expires_at = _now() + timedelta(days=SESSION_TTL_DAYS)
