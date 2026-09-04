@@ -39,14 +39,13 @@ def test_workout_logs_page_has_export_button():
     assert "/api/workout-logs/export" in r.text
 
 
-def test_log_page_ties_guidelines_to_users_goal():
-    """Regression guard: renderTipsForGoal existed but was never called by
-    renderTips() in an earlier version of this feature — confirms the wiring
-    is actually complete, not just that the helper function exists."""
+def test_guidelines_tips_feature_intentionally_removed():
+    """The Guidelines/Tips drawer was explicitly removed from the Log
+    screen per user request — confirms it stays gone, not that it exists."""
     client = TestClient(app)
     r = client.get("/")
-    assert "renderTipsForGoal(USER_GOAL)" in r.text
-    assert "TIPS.map(t=>" not in r.text  # the old unfiltered direct usage must be gone
+    assert "renderTipsForGoal" not in r.text
+    assert "tips-fab" not in r.text
 
 
 def test_log_page_includes_progression_wiring():
@@ -118,12 +117,14 @@ def test_dashboard_normalizes_muscle_group_taxonomy():
     assert "normalizeMuscleGroup" in r.text
 
 
-def test_dashboard_includes_body_weight_tracking():
+def test_dashboard_includes_body_weight_chart_but_not_logging_form():
+    """Weight LOGGING moved to the Log screen per user request — the
+    dashboard keeps only the trend chart, not the input/button."""
     client = TestClient(app)
     r = client.get("/dashboard")
-    assert "bw-log-btn" in r.text
-    assert "/api/body-metrics" in r.text
+    assert "bwChart" in r.text
     assert "GOAL_WEIGHT_KG" in r.text
+    assert "bw-log-btn" not in r.text
 
 
 def test_dashboard_includes_muscle_map():

@@ -107,9 +107,11 @@
   .filter-bar input[type="text"]{ flex:1; min-width:140px; }
   .sort-btn{
     background:var(--surface-2); border:1px solid var(--line); color:var(--steel); font-family:'JetBrains Mono', monospace;
-    font-size:11px; padding:8px 12px; border-radius:6px; cursor:pointer; white-space:nowrap;
+    font-size:11px; padding:8px 12px; border-radius:10px; cursor:pointer; white-space:nowrap;
+    box-shadow:0 3px 0 0 rgba(0,0,0,.2); transition:border-color .15s ease, color .15s ease, transform .08s ease, box-shadow .08s ease;
   }
   .sort-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .sort-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 0 rgba(0,0,0,.2); }
   .filter-count{ font-size:12px; color:var(--steel); font-family:'JetBrains Mono', monospace; margin-left:auto; white-space:nowrap; }
 
   /* ---- Table ---- */
@@ -171,9 +173,13 @@
   .confirm-box{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:20px; max-width:320px; width:100%; }
   .confirm-box p{ font-size:14px; line-height:1.5; margin:0 0 16px; color:var(--chalk); }
   .confirm-actions{ display:flex; gap:8px; }
-  .confirm-actions button{ flex:1; padding:10px; border-radius:6px; border:none; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer; }
-  .confirm-actions .yes{ background:var(--rust); color:#fff; }
-  .confirm-actions .no{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
+  .confirm-actions button{
+    flex:1; padding:11px; border-radius:12px; border:none; font-family:'Oswald', sans-serif; font-weight:600;
+    text-transform:uppercase; font-size:12px; cursor:pointer; transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .confirm-actions .yes{ background:var(--rust); color:#fff; box-shadow:0 4px 0 0 rgba(0,0,0,.28); }
+  .confirm-actions .no{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); box-shadow:0 3px 0 0 rgba(0,0,0,.2); }
+  .confirm-actions button:active{ transform:translateY(3px); box-shadow:0 1px 0 0 rgba(0,0,0,.2); }
   .edit-field{ margin-bottom:12px; }
   .edit-field label{ display:block; font-size:11px; color:var(--steel); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; font-family:'JetBrains Mono', monospace; }
   .edit-field input{ width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-size:14px; padding:8px 10px; }

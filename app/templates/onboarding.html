@@ -38,13 +38,23 @@
   .field input:focus, .field select:focus{ outline:none; border-color:var(--accent); }
   .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .submit-btn{
-    width:100%; margin-top:8px; padding:12px; border:none; border-radius:6px; background:var(--accent); color:#1a1a1a;
+    width:100%; margin-top:8px; padding:13px; border:none; border-radius:14px; background:var(--accent); color:#0a1512;
     font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
+    box-shadow:0 4px 0 0 rgba(0,0,0,.28); transition:transform .08s ease, box-shadow .08s ease;
   }
-  .submit-btn:disabled{ background:var(--line); color:var(--steel); cursor:default; }
+  .submit-btn:active:not(:disabled){ transform:translateY(3px); box-shadow:0 1px 0 0 rgba(0,0,0,.28); }
+  .submit-btn:disabled{ background:var(--line); color:var(--steel); cursor:default; box-shadow:none; }
   .msg{ font-size:13px; margin-top:14px; text-align:center; min-height:16px; }
   .msg.err{ color:var(--rust); }
   .msg.ok{ color:var(--green); }
+  .account-btn{
+    width:100%; padding:12px; border:1px solid var(--line); background:none; color:var(--chalk);
+    border-radius:12px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase;
+    font-size:12px; cursor:pointer; box-shadow:0 3px 0 0 rgba(0,0,0,.2);
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .account-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 0 rgba(0,0,0,.2); }
+  .account-btn-danger{ border-color:var(--rust); color:var(--rust); }
   .back-link{ display:none; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--steel); text-decoration:none; margin-bottom:14px; }
   .back-link:hover{ color:var(--accent); }
 </style>
@@ -139,7 +149,7 @@
   <div id="account-section" style="display:none; margin-top:28px; padding-top:20px; border-top:1px solid var(--line);">
     <p class="eyebrow" style="margin-bottom:12px;">Account</p>
 
-    <button type="button" id="logout-btn" class="logout-btn" style="width:100%; padding:11px; margin-bottom:16px; border:1px solid var(--line); background:none; color:var(--chalk); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer; justify-content:center;">Log out</button>
+    <button type="button" id="logout-btn" class="logout-btn account-btn" style="margin-bottom:16px; justify-content:center;">Log out</button>
 
     <form id="change-password-form" style="margin-bottom:20px;">
       <div class="field">
@@ -154,13 +164,13 @@
       <div class="msg" id="password-msg"></div>
     </form>
 
-    <button type="button" id="export-data-btn" style="width:100%; padding:11px; margin-bottom:12px; border:1px solid var(--line); background:none; color:var(--chalk); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Export my data (JSON)</button>
+    <button type="button" id="export-data-btn" class="account-btn" style="margin-bottom:12px;">Export my data (JSON)</button>
 
     <input type="file" id="import-history-input" accept=".csv" style="display:none;">
-    <button type="button" id="import-history-btn" style="width:100%; padding:11px; margin-bottom:8px; border:1px solid var(--line); background:none; color:var(--chalk); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Import history (FitNotes / Strong / Hevy)</button>
+    <button type="button" id="import-history-btn" class="account-btn" style="margin-bottom:8px;">Import history (FitNotes / Strong / Hevy)</button>
     <div id="import-history-msg" class="msg" style="margin-bottom:12px;"></div>
 
-    <button type="button" id="delete-account-btn" style="width:100%; padding:11px; border:1px solid var(--rust); background:none; color:var(--rust); border-radius:6px; font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:12px; cursor:pointer;">Delete my account</button>
+    <button type="button" id="delete-account-btn" class="account-btn account-btn-danger">Delete my account</button>
     <div class="msg" id="delete-msg"></div>
   </div>
 </div>

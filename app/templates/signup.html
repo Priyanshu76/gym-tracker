@@ -40,10 +40,12 @@
   /* honeypot field — visually and structurally hidden from real users, but present in the DOM for bots that fill every field */
   .hp-field{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
   .submit-btn{
-    width:100%; margin-top:6px; padding:12px; border:none; border-radius:6px; background:var(--accent); color:#1a1a1a;
+    width:100%; margin-top:6px; padding:13px; border:none; border-radius:14px; background:var(--accent); color:#0a1512;
     font-family:'Oswald', sans-serif; font-weight:600; text-transform:uppercase; font-size:13px; letter-spacing:.05em; cursor:pointer;
+    box-shadow:0 4px 0 0 rgba(0,0,0,.28); transition:transform .08s ease, box-shadow .08s ease;
   }
-  .submit-btn:disabled{ background:var(--line); color:var(--steel); cursor:default; }
+  .submit-btn:active:not(:disabled){ transform:translateY(3px); box-shadow:0 1px 0 0 rgba(0,0,0,.28); }
+  .submit-btn:disabled{ background:var(--line); color:var(--steel); cursor:default; box-shadow:none; }
   .msg{ font-size:13px; margin-top:14px; text-align:center; min-height:16px; }
   .msg.err{ color:var(--rust); }
   .msg.ok{ color:var(--green); }

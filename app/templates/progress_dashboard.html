@@ -106,17 +106,19 @@
   .tab-btn{
     background:var(--surface); border:1px solid var(--line); color:var(--steel); font-family:'Oswald', sans-serif;
     font-weight:600; text-transform:uppercase; font-size:12px; letter-spacing:.04em; padding:8px 14px;
-    border-radius:20px; cursor:pointer; transition:all .15s ease;
+    border-radius:20px; cursor:pointer; transition:all .15s ease, transform .08s ease;
   }
   .tab-btn:hover{ border-color:#4a4d51; }
-  .tab-btn.active{ background:var(--accent); border-color:var(--accent); color:#1a1a1a; }
+  .tab-btn.active{ background:var(--accent); border-color:var(--accent); color:#0a1512; }
+  .tab-btn:active{ transform:scale(.94); }
 
   .range-pills{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:3px; }
   .range-pill{
     background:transparent; border:none; color:var(--steel); font-family:'JetBrains Mono', monospace;
-    font-size:11px; padding:6px 11px; border-radius:16px; cursor:pointer; transition:all .15s ease;
+    font-size:11px; padding:6px 11px; border-radius:16px; cursor:pointer; transition:all .15s ease, transform .08s ease;
   }
   .range-pill.active{ background:var(--surface-2); color:var(--chalk); }
+  .range-pill:active{ transform:scale(.92); }
 
   .section{ margin-top:24px; }
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
@@ -138,7 +140,7 @@
   .checkbox-lbl{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--steel); cursor:pointer; user-select:none; }
   .checkbox-lbl input{ accent-color:var(--accent); }
 
-  .card{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; }
   .chart-wrap{ position:relative; height:260px; }
   .chart-wrap.small{ height:220px; }
   .chart-note{ font-size:11px; color:var(--steel); margin-top:10px; text-align:center; }
@@ -808,12 +810,7 @@ function renderOverview(target){
     <div class="section">
       <div class="section-head"><h2>Body weight</h2></div>
       <div class="card">
-        <div class="bw-log-row">
-          <input type="number" id="bw-input" placeholder="Log today's weight (kg)" min="30" max="300" step="0.1">
-          <button id="bw-log-btn">${icon('plus',14)} Log</button>
-        </div>
-        <div id="bw-msg" class="bw-msg"></div>
-        ${BODY_METRICS.length ? '<div class="chart-wrap small"><canvas id="bwChart"></canvas></div>' : '<div class="chart-note">No body-weight entries logged yet.</div>'}
+        ${BODY_METRICS.length ? '<div class="chart-wrap small"><canvas id="bwChart"></canvas></div>' : '<div class="chart-note">No body-weight entries logged yet — log your weight from the main Log screen.</div>'}
       </div>
     </div>
 
@@ -885,32 +882,6 @@ function renderOverview(target){
       },
     });
   }
-
-  const bwInput = document.getElementById('bw-input');
-  const bwMsg = document.getElementById('bw-msg');
-  document.getElementById('bw-log-btn').addEventListener('click', async ()=>{
-    const weight = Number(bwInput.value);
-    if(!bwInput.value || isNaN(weight) || weight < 30 || weight > 300){
-      bwMsg.textContent = 'Enter a weight between 30 and 300 kg.';
-      bwMsg.className = 'bw-msg err';
-      return;
-    }
-    try{
-      const res = await authFetch('/api/body-metrics', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weight_kg: weight }),
-      });
-      if(!res.ok) throw new Error('failed');
-      bwMsg.textContent = 'Logged!';
-      bwMsg.className = 'bw-msg ok';
-      const bmRes = await authFetch('/api/body-metrics');
-      if(bmRes.ok) BODY_METRICS = await bmRes.json();
-      renderTab();
-    }catch(e){
-      bwMsg.textContent = 'Could not log — check your connection.';
-      bwMsg.className = 'bw-msg err';
-    }
-  });
 }
 
 // ==================================================================
